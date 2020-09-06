@@ -2,3 +2,4 @@
 *.gml
 *.mp4
 __pycache__/*
+static/data/spatplan/*
