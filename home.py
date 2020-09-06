@@ -140,7 +140,7 @@ def upload_gml():
 				print(form.file.data)
 				filename = secure_filename(form.file.data.filename)
 				print(type(filename))
-				filename = session['username'] + "_" + filename
+				filename = session['public_id'] + "_" + filename
 				
 				#send to database
 				data = {
@@ -624,7 +624,7 @@ def upload_photo():
 			print(file)
 			if file and allowed_photo_file(file.filename):
 				filename = secure_filename(file.filename)
-				filename = session['username'] + "_" + filename
+				filename = session['public_id'] + "_" + filename
 				print(filename)
 				#send to database
 				data = {
@@ -686,7 +686,7 @@ def upload_video():
 			print(file)
 			if file and allowed_video_file(file.filename):
 				filename = secure_filename(file.filename)
-				filename = session['username'] + "_" + filename
+				filename = session['public_id'] + "_" + filename
 				print(filename)
 				#send to database
 				data = {
