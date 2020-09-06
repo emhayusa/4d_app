@@ -624,6 +624,7 @@ def upload_photo():
 			print(file)
 			if file and allowed_photo_file(file.filename):
 				filename = secure_filename(file.filename)
+				filename = session['username'] + "_" + filename
 				print(filename)
 				#send to database
 				data = {
@@ -685,6 +686,7 @@ def upload_video():
 			print(file)
 			if file and allowed_video_file(file.filename):
 				filename = secure_filename(file.filename)
+				filename = session['username'] + "_" + filename
 				print(filename)
 				#send to database
 				data = {
