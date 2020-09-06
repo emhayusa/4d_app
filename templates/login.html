@@ -1,0 +1,148 @@
+{% extends 'main.html' %}
+
+{% block content %}
+
+<div class="w3-row-padding" style="padding-top:20px; min-height:480px;">
+	<div class="w3-container w3-padding-32" id="login">
+		<h3 class="w3-border-bottom w3-border-light-grey w3-padding-16">Login</h3>
+    </div>
+	<div class="w3-col l6">
+		<div class="w3-col l6">
+			{% with messages = get_flashed_messages() %}
+			{% if messages %}
+				<ul class="flashes">
+					{% for message in messages %}
+					<div class="message_flash"><p class="w3-text-red">{{ message }}</p></div>
+					{% endfor %}
+				</ul>
+			{% endif %}
+			{% endwith %}
+			<div class="col-sm-4">
+				<form action="" method="post">
+					{{ form.hidden_tag() }}
+					<p>
+						{{ form.username.label }} <br />
+						{{ form.username(placeholder='Username', size=40) }} <br/>
+						{% for error in form.username.errors %}
+						<span style="color: red;">[{{ error }}</span>
+						{% endfor %}
+					</p>
+					<p>
+						{{ form.password.label }} <br />
+						{{ form.password(size=40) }} <br/>
+						{% for error in form.password.errors %}
+						<span style="color: red;">[{{ error }}</span>
+						{% endfor %}
+					</p>
+					<p>{{ form.submit() }}</p>
+				</form>
+				<p>
+				   <a href="{{ url_for('home.forgot') }}">Forgot Password</a> | 
+				   <a href="{{ url_for('home.register') }}" class="login-right">Register</a>
+				</p>
+			</div>
+		</div>
+		<!--
+				New User? Register <a href="{{ url_for('home.register') }}">here</a>
+		<form id="target" class="w3-container">
+		  <p>      
+			<label>Username</label>
+			<input class="w3-input w3-border" id="username" name="username" type="text">
+		  </p>
+		  <p>      
+			<label>Password</label>
+			<input class="w3-input w3-border" id="password" name="password" type="password">
+		  </p>
+		  <p>      
+			<button class="w3-button w3-blue">Signin</button>
+		  </p>
+		</form>
+		<div id="result"></div>
+		
+		-->
+	</div>
+</div>
+
+<script>
+function getCookie(cname) {
+  var name = cname + "=";
+  var decodedCookie = decodeURIComponent(document.cookie);
+  var ca = decodedCookie.split(';');
+  for(var i = 0; i <ca.length; i++) {
+    var c = ca[i];
+    while (c.charAt(0) == ' ') {
+      c = c.substring(1);
+    }
+    if (c.indexOf(name) == 0) {
+      return c.substring(name.length, c.length);
+    }
+  }
+  return "";
+}
+
+function login(){
+    $.ajax({
+      url: "{{url_for('home.login')}}",
+      type: 'POST',
+      data: JSON.stringify({
+        "username": $("#username").val(),
+        "password": $("#password").val(),
+      }),
+      /*
+      headers: {
+        "Authorization": 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1NzgwNDA0MDMsImlhdCI6MTU3Nzk1Mzk5OCwic3ViIjoyfQ.aOcc8AoywBLEslHjTpUO1RD5bPXFLmcIzpMLq5HpgCI'  
+      },
+      */
+      //dataType: 'json',
+      contentType: 'application/json',
+      complete: function(response) {
+         console.log(response);
+       
+          // $( "#target" ).fadeIn(slow);
+          //obj = $.parseJSON(data.responseJSON);
+          //console.log(obj);
+          $( "#result" ).html('');
+		  color='';
+		  //console.log(response.status);
+		  if (response.status != 200){
+			color='w3-text-red';
+		  }
+		  
+		  if (response.status == 200){
+			$( "#target" ).hide();
+			//document.cookie = "Authorization="+response.responseJSON.Authorization;
+			//window.location.href="{{ url_for('home.contributor') }}"	
+		  }
+          $( "#result" ).append('<p class="'+color+'">Http Code: ' + response.status + '(' + response.statusText +')</p>');
+          $( "#result" ).append('<p class="'+color+'">Status: ' + response.responseJSON.status + '</p>');
+          $( "#result" ).append('<p class="'+color+'">Message: ' + response.responseJSON.message + '</p>');
+          //console.log(data.responseJSON.status);
+        
+      }
+    });
+
+  }
+$( document ).ready(function() {
+  /*$( "#target" ).hide();
+  var auth = getCookie("Authorization");
+  if (auth != "") {
+    console.log("Authorization " + auth);
+	window.location.href="{{ url_for('home.contributor') }}"	
+  } else{
+	$( "#target" ).show();
+  }
+*/
+  $( "#target" ).submit(function( event ) {
+      //alert( "Handler for .submit() called." );
+	  console.log('clicked {{ url_api }}' );
+	  if($("#username").val() == "" || $("#password").val() == ""){
+		$( "#result" ).html('');
+        $( "#result" ).append('<p class="w3-text-red">Message: Please complete the form</p>');
+	  }else{
+		login();
+	  }
+	  event.preventDefault();
+  });
+});
+</script>
+{% endblock %}

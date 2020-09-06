@@ -1,0 +1,165 @@
+{% extends 'main.html' %}
+
+{% block content %}
+
+<div class="w3-row-padding" style="padding-top:20px; min-height:480px;">
+	<div class="w3-container w3-padding-32" id="login">
+		<h3 class="w3-border-bottom w3-border-light-grey w3-padding-16">Registration</h3>
+    </div>
+	<div class="w3-col l6">
+		<div id="result"></div>
+		<form id="target" class="w3-container">
+		  <p>      
+			<label>Type</label>
+			<select id="type_id" name="type_id" class="w3-select">
+				<option disabled="" selected="selected">Choose Type</option>
+			</select>
+		  </p> 
+		  <p>      
+			<label>Area</label>
+			<select id="area_id" name="area_id" class="w3-select">
+				<option disabled="" selected="selected">Choose Area</option>
+			</select>
+		  </p>
+		  <p>      
+			<label>Email</label>
+			<input class="w3-input w3-border" id="email" name="email" type="email">
+		  </p>
+		  <p>      
+			<label>Username</label>
+			<input class="w3-input w3-border" id="username" name="username" type="text">
+		  </p>
+		  <p>      
+			<label>Password</label>
+			<input class="w3-input w3-border" id="password" name="password" type="password">
+		  </p>
+		  <p>      
+			<label>Repeat Password</label>
+			<input class="w3-input w3-border" id="confirm_password" name="confirm_password" type="password">
+		  </p>
+		  <p>      
+			<button class="w3-button w3-blue">Register</button>
+		  </p>
+		</form>
+		
+		<p>
+		   <a href="{{ url_for('home.login') }}">Login</a> | 
+		   <a href="{{ url_for('home.forgot') }}" class="login-right">Forgot Password?</a>
+		</p>
+	</div>
+</div>
+
+<script>
+function load_type(){
+    $.ajax({
+      url: '{{ url_api }}type/',
+      type: 'GET',
+      /*
+      headers: {
+        "Authorization": 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1NzgwNDA0MDMsImlhdCI6MTU3Nzk1Mzk5OCwic3ViIjoyfQ.aOcc8AoywBLEslHjTpUO1RD5bPXFLmcIzpMLq5HpgCI'  
+      },
+      */
+      //dataType: 'json',
+      contentType: 'application/json',
+      complete: function(response) {
+        //console.log(response);
+        $.each(response.responseJSON.data, function(i, v) {
+              //console.log(i + " " + v.id + ' ' + v.name);
+            $('#type_id').append('<option value="'+v.id+'">'+v.type_name+'</option>');
+			//console.log(v.id + " " + v.name);
+        });
+                
+      }
+    });
+
+}
+function load_area(){
+    $.ajax({
+      url: '{{ url_api }}area/',
+      type: 'GET',
+      /*
+      headers: {
+        "Authorization": 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1NzgwNDA0MDMsImlhdCI6MTU3Nzk1Mzk5OCwic3ViIjoyfQ.aOcc8AoywBLEslHjTpUO1RD5bPXFLmcIzpMLq5HpgCI'  
+      },
+      */
+      //dataType: 'json',
+      contentType: 'application/json',
+      complete: function(response) {
+        //console.log(response);
+		$.each(response.responseJSON.data, function(i, v) {
+              //console.log(i + " " + v.id + ' ' + v.name);
+            $('#area_id').append('<option value="'+v.id+'">'+v.area_name+'</option>');
+			//console.log(v.id + " " + v.name);
+        });
+      }
+    });
+
+}
+
+function register(){
+    $.ajax({
+      url: '{{ url_api }}user/',
+      type: 'POST',
+      data: JSON.stringify({
+        "type_id": parseInt($("#type_id").val()),
+        "area_id": parseInt($("#area_id").val()),
+        "email": $("#email").val(),
+        "username": $("#username").val(),
+        "password": $("#password").val()
+      }),
+      /*
+      headers: {
+        "Authorization": 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1NzgwNDA0MDMsImlhdCI6MTU3Nzk1Mzk5OCwic3ViIjoyfQ.aOcc8AoywBLEslHjTpUO1RD5bPXFLmcIzpMLq5HpgCI'  
+      },
+      */
+      //dataType: 'json',
+      contentType: 'application/json',
+      complete: function(response) {
+         //console.log(response);
+       
+          // $( "#target" ).fadeIn(slow);
+          //obj = $.parseJSON(data.responseJSON);
+          //console.log(obj);
+          $( "#result" ).html('');
+		  color='';
+		  //console.log(response.status);
+		  if (response.status != 201){
+			color='w3-text-red';
+		  }
+		  
+		  if (response.status == 201){
+			  $( "#target" ).hide();
+		  }
+          $( "#result" ).append('<p class="'+color+'">Http Code: ' + response.status + '(' + response.statusText +')</p>');
+          $( "#result" ).append('<p class="'+color+'">Status: ' + response.responseJSON.status + '</p>');
+          $( "#result" ).append('<p class="'+color+'">Message: ' + response.responseJSON.message + '</p>');
+          //console.log(data.responseJSON.status);
+        
+      }
+    });
+
+  }
+$( document ).ready(function() {
+  load_type();
+  load_area();
+  $( "#target" ).submit(function( event ) {
+      //alert( "Handler for .submit() called." );
+	  console.log('clicked {{ url_api }}' );
+	  //console.log($("#type_id").val() + ' ' + $("#area_id").val() + ' ' + $("#email").val()  + ' ' +  $("#username").val()  + ' ' +  $("#password").val());
+	if($("#type_id").val() == "" || $("#area_id").val() == "" || $("#email").val() == "" || $("#username").val() == "" || $("#password").val() == ""){
+		$( "#result" ).html('');
+        $( "#result" ).append('<p class="w3-text-red">Message: Please complete the form</p>');
+	}else{
+		if($("#password").val() == $("#confirm_password").val()){
+			register();
+		}else{
+          $( "#result" ).html('');
+          $( "#result" ).append('<p class="w3-text-red">Message: Password and Confirm Password does not match</p>');
+		}
+         
+	}
+	  event.preventDefault();
+  });
+});
+</script>
+{% endblock %}

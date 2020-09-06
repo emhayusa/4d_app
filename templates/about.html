@@ -1,0 +1,30 @@
+{% extends 'main.html' %}
+
+{% block content %}
+
+<div class="w3-container w3-padding-32" id="about">
+    <h3 class="w3-border-bottom w3-border-light-grey w3-padding-16">About</h3>
+     <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Excepteur sint
+      occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco
+      laboris nisi ut aliquip ex ea commodo consequat.
+    </p>
+  </div>
+
+  <div class="w3-row-padding">
+    <div class="w3-col l3 m3 w3-margin-bottom">
+      <img src="{{ url_for('static', filename='foto/agung_indrajit.jpg') }}" alt="Agung" style="width:100%">
+      <h3 class="w3-text-blue">Agung Indrajit</h3>
+      <p class="w3-opacity">GIS Researcher</p>
+      <p>Phasellus eget enim eu lectus faucibus vestibulum. Suspendisse sodales pellentesque elementum.</p>
+      <p><button class="w3-button w3-blue w3-block">Contact</button></p>
+    </div>
+    <div class="w3-col l3 m3 w3-margin-bottom">
+      <img src="{{ url_for('static', filename='foto/mh_yusa.jpg') }}" alt="Yusa" style="width:100%">
+      <h3 class="w3-text-blue">M. H. Yusa</h3>
+      <p class="w3-opacity">GIS Researcher</p>
+      <p>Phasellus eget enim eu lectus faucibus vestibulum. Suspendisse sodales pellentesque elementum.</p>
+      <p><button class="w3-button w3-blue w3-block">Contact</button></p>
+    </div>
+  </div>
+  
+{% endblock %}

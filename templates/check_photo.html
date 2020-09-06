@@ -1,0 +1,131 @@
+{% extends 'main.html' %}
+
+{% block content %}
+
+
+<div class="w3-row-padding" style="padding-top:20px; min-height:480px;">
+	<div class="w3-container w3-padding-32" id="login">
+		<h3 class="w3-border-bottom w3-border-light-grey w3-padding-16">Review Photo</h3>
+    </div>
+	<div class="w3-col">
+				<div class="w3-row-padding">
+					<div class="w3-col l2 m2">
+					  <p>Contributor</p>
+					</div>
+					<div class="w3-col l6 m6">
+					  <p id="contributor">contributor</p>
+					</div>
+				</div>
+				<div class="w3-row-padding">
+					<div class="w3-col l2 m2">
+					  <p>Uploaded on</p>
+					</div>
+					<div class="w3-col l6 m6">
+					  <p id="uploaded_on">Uploaded on</p>
+					</div>
+				</div>
+				<div class="w3-row-padding">
+					<div class="w3-col l2 m2">
+					  <p>GML ID</p>
+					</div>
+					<div class="w3-col l2 m2">
+					  <p id="gml_id">GML ID</p>
+					</div>
+				</div>
+				<div class="w3-row-padding">
+					<div class="w3-col l2 m2">
+					  <p>Photo File</p>
+					</div>
+					<div class="w3-col l2 m2">
+					  <p id="photo">Photo File</p>
+					</div>
+				</div>
+				<div class="w3-row-padding">
+					<div class="w3-col l2 m2">
+					  <p>Image</p>
+					</div>
+					<div class="w3-col l2 m2">
+					  <img id="img" width="200" height="100">
+					</div>
+				</div>
+			
+			<div class="l6">
+			<p> <a href="{{ url_for('home.validator') }}" class="w3-bar-item w3-button w3-green">< Back to Validator page</a></p>
+				
+				{% with messages = get_flashed_messages() %}
+				{% if messages %}
+					<ul class="flashes">
+						{% for message in messages %}
+						<div class="message_flash"><p class="w3-text-red">{{ message }}</p></div>
+						{% endfor %}
+					</ul>
+				{% endif %}
+				{% endwith %}
+				<div id="konten" style="display:none;">
+					<h3>Actions</h3>
+					<form action="" method="post">
+						{{ form.hidden_tag() }}
+						<p>
+							{{ form.respons.label }} <br />
+							{{ form.respons }} <br/>
+							{% for error in form.respons.errors %}
+							<span style="color: red;">[{{ error }}</span>
+							{% endfor %}
+						</p>
+						<p>
+							{{ form.reason.label }} <br />
+							{{ form.reason }} <br/>
+							{% for error in form.reason.errors %}
+							<span style="color: red;">[{{ error }}</span>
+							{% endfor %}
+						</p>
+						
+						<p> {{ form.submit() }}</p>
+						
+					</form>
+				</div>
+			</div>
+	</div>
+</div>
+
+<script>
+function load_photo(){
+    $.ajax({
+      url: '{{ url_api }}monitoring/photo/id/{{id}}',
+      type: 'GET',
+      
+      headers: {
+        "Authorization":'{{session["Authorization"]}}' 
+      },
+      
+      //dataType: 'json',
+      contentType: 'application/json',
+      complete: function(response) {
+        //console.log(response);
+		data = response.responseJSON;
+		//console.log(response.responseJSON);
+		
+		$('#contributor').html(data.contributor);
+	
+		
+		uploaded= data.timestamp.replace("T"," ").substr(0, 19);//dateConverter(v.uploaded_on);
+		$('#uploaded_on').html(uploaded);
+		$('#gml_id').html(data.buildings.gml_id);
+		$('#photo').html(data.photo_file);
+		$("#img").attr("src","{{ url_for('static', filename='data/photos/1')}}".replace(1,data.photo_file));
+		//$('#function').html(data.function);
+		//$('#height').html(data.height);
+		//console.log(data.status.status_name);
+		if(data.status.id == 1){
+			$("#konten").show();
+			$('#id').val(data.id);
+			//console.log(document.getElementById("filename"));
+		}
+      }
+    });
+}
+$( document ).ready(function() {
+	load_photo();	
+});
+</script>
+{% endblock %}

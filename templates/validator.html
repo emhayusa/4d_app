@@ -1,0 +1,323 @@
+{% extends 'main.html' %}
+
+{% block content %}
+
+<div class="w3-row-padding" style="padding-top:20px; min-height:480px;">
+	<div class="w3-container w3-padding-32" id="user">
+		<h3 class="w3-border-bottom w3-border-light-grey w3-padding-16">User Profile</h3>
+    </div>
+	<div class="w3-row-padding">
+		<div class="w3-col l2 m2">
+		  <p>Type</p>
+		</div>
+		<div class="w3-col l6 m6">
+		  <p id="type">Type</p>
+		</div>
+	</div>
+	<div class="w3-row-padding">
+		<div class="w3-col l2 m2">
+		  <p>Area</p>
+		</div>
+		<div class="w3-col l2 m2">
+		  <p id="area">Area</p>
+		</div>
+	</div>
+	<div class="w3-row-padding">
+		<div class="w3-col l2 m2">
+		  <p>Public ID</p>
+		</div>
+		<div class="w3-col l6 m6">
+		  <p id="public_id">public id</p>
+		</div>
+	</div>
+	<div class="w3-row-padding">
+		<div class="w3-col l2 m2">
+		  <p>Email</p>
+		</div>
+		<div class="w3-col l6 m6">
+		  <p id="email">Email</p>
+		</div>
+	</div>
+	<div class="w3-row-padding">
+		<div class="w3-col l2 m2">
+		  <p>Username</p>
+		</div>
+		<div class="w3-col l2 m2">
+		  <p id="username">Username</p>
+		</div>
+	</div>
+	<div class="w3-container w3-padding-32" id="activity">
+		<h3 class="w3-border-bottom w3-border-light-grey w3-padding-16">Activity</h3>
+    </div>
+	<div class="w3-row-padding">
+		<div class="w3-col">
+		<h3>Verify 3d building (CityGml)</h3>
+		<table class="w3-table w3-striped" id="gml_table">
+			<tr>
+			  <th>No</th>
+			  <th>City GML file</th>
+			  <th>Uploaded on</th>
+			  <th>Status</th>
+			  <th>Action</th>
+			</tr>
+		  </table>
+		</div>
+	</div>
+	<div class="w3-row-padding">
+		<div class="w3-col">
+			<h3>Verify Attribute </h3>
+		<table class="w3-table w3-striped" id="attribute_table">
+			<tr>
+			  <th>No</th>
+			  <th>CityGML ID</th>
+			  <th>Name</th>
+			  <th>Function</th>
+			  <th>Height</th>
+			  <th>Reported on</th>
+			  <th>Status</th>
+			  <th>Action</th>
+			</tr>
+			
+		  </table>
+		</div>
+	</div>
+	<div class="w3-row-padding">
+		<div class="w3-col">
+		  <h3>Verify Photo</h3>
+		  <table class="w3-table w3-striped" id="photo_table">
+			<tr>
+			  <th>No</th> 
+			  <th>CityGML ID</th>
+			  <th>Image</th>
+			  <th>Uploaded on</th>
+			  <th>Status</th>
+			  <th>Action</th>
+			</tr>
+		  </table>
+		  
+		</div>
+	</div>
+	<div class="w3-row-padding">
+		<div class="w3-col">
+		<h3>Verify Video</h3>
+		<table class="w3-table w3-striped" id="video_table">
+			<tr>
+			  <th>No</th> 
+			  <th>CityGML ID</th>
+			  <th>Video</th>
+			  <th>Uploaded on</th>
+			  <th>Status</th>
+			  <th>Action</th>
+			</tr>
+		  </table>
+		</div>
+	</div>
+	<br />
+	<br />
+	
+    </div>
+</div>
+
+<script>
+function load_profile(){
+    $.ajax({
+      url: '{{ url_api }}user/username/{{session["username"]}}',
+      type: 'GET',
+      
+      headers: {
+        "Authorization":'{{session["Authorization"]}}' 
+      },
+      
+      //dataType: 'json',
+      contentType: 'application/json',
+      complete: function(response) {
+        //console.log(response);
+		data = response.responseJSON;
+		//console.log(response.responseJSON);
+		//console.log(data.type.name);
+		$('#type').html(data.type.type_name);
+		$('#area').html(data.area.area_name);
+		$('#public_id').html(data.public_id);
+		$('#email').html(data.email);
+		$('#username').html(data.username);
+        //$.each(response.responseJSON.data, function(i, v) {
+              //console.log(i + " " + v.id + ' ' + v.name);
+          //  $('#type_id').append('<option value="'+v.id+'">'+v.name+'</option>');
+			//console.log(v.id + " " + v.name);
+        //});
+                
+      }
+    });
+}
+
+function dateConverter(UNIX_timestamp){
+  return new Date(UNIX_timestamp).toISOString();
+}
+
+function load_gml(){
+    $.ajax({
+      url: '{{ url_api }}city_gml/area/{{session["area_id"]}}',
+      type: 'GET',
+      
+      headers: {
+        "Authorization":'{{session["Authorization"]}}' 
+      },
+      
+      //dataType: 'json',
+      contentType: 'application/json',
+      complete: function(response) {
+        //console.log(response);
+		if (response.status == 200){
+			
+			data = response.responseJSON.data;
+			//console.log(response.responseJSON);
+			j = 1;
+			$.each(data, function(i, v) {
+				//console.log(i + " " + v.id + ' ' + v.name);
+				uploaded= v.uploaded_on.replace("T"," ").substr(0, 19);//dateConverter(v.uploaded_on);
+				//console.log(v);
+				if(v.status.id == 1){
+					link = "{{ url_for('home.check_gml', id=1) }}".replace("1",v.id);
+					action = "<a href=\""+ link +"\" class=\"w3-bar-item w3-button w3-blue\">Verify</a>";
+				}else{
+					action = "";
+				}
+				$('#gml_table').append('<tr><td>'+j+'</td><td>'+v.city_gml_file+'</td><td>'+uploaded+'</td><td>'+v.status.status_name+'</td><td>'+ action +'</td>');
+				j++;
+			});
+        }else{
+			$('#attribute_table').append('<tr><td colspan=5>No data</td></tr>');
+		}       
+		//console.log(data.type.name);
+      }
+    });
+}
+
+function load_attribute(){
+    $.ajax({
+      url: '{{ url_api }}monitoring/attribute/area/{{session["area_id"]}}',
+      type: 'GET',
+      
+      headers: {
+        "Authorization":'{{session["Authorization"]}}' 
+      },
+      
+      //dataType: 'json',
+      contentType: 'application/json',
+      complete: function(response) {
+        //console.log(response);
+		if (response.status == 200){
+			data = response.responseJSON.data;
+			//console.log(response.responseJSON);
+			j = 1;
+			$.each(data, function(i, v) {
+				//console.log(i + " " + v.id + ' ' + v.name);
+				uploaded= v.timestamp.replace("T"," ").substr(0, 19);//dateConverter(v.uploaded_on);
+				//console.log(v);
+				if(v.status.id == 1){
+					link = "{{ url_for('home.check_attribute', id=1) }}".replace("1",v.id);
+					action = "<a href=\""+ link +"\" class=\"w3-bar-item w3-button w3-blue\">Verify</a>";
+				}else{
+					action = "";
+				}
+				$('#attribute_table').append('<tr><td>'+j+'</td><td>'+v.buildings.gml_id+'</td><td>'+v.function+'</td><td>'+v.name+'</td><td>'+v.height+'</td><td>'+uploaded+'</td><td>'+v.status.status_name+'</td><td>'+ action +'</td>');
+				j++;
+			});
+				   
+		}else{
+			$('#attribute_table').append('<tr><td colspan=8>No data</td></tr>');
+		}
+      }
+    });
+}
+
+function load_photo(){
+    $.ajax({
+      url: '{{ url_api }}monitoring/photo/area/{{session["area_id"]}}',
+      type: 'GET',
+      
+      headers: {
+        "Authorization":'{{session["Authorization"]}}' 
+      },
+      
+      //dataType: 'json',
+      contentType: 'application/json',
+      complete: function(response) {
+        //console.log(response);
+		if (response.status == 200){
+			data = response.responseJSON.data;
+			//console.log(response.responseJSON);
+			j = 1;
+			$.each(data, function(i, v) {
+				//console.log(i + " " + v.id + ' ' + v.name);
+				uploaded= v.timestamp.replace("T"," ").substr(0, 19);//dateConverter(v.uploaded_on);
+				//console.log(v);
+				if(v.status.id == 1){
+					link = "{{ url_for('home.check_photo', id=1) }}".replace("1",v.id);
+					action = "<a href=\""+ link +"\" class=\"w3-bar-item w3-button w3-blue\">Verify</a>";
+				}else{
+					action = "";
+				}
+				$('#photo_table').append('<tr><td>'+j+'</td><td>'+v.buildings.gml_id+'</td><td>'+v.photo_file+'</td><td>'+uploaded+'</td><td>'+v.status.status_name+'</td><td>'+ action +'</td>');
+				j++;
+			});
+				   
+			//console.log(data.type.name);
+		}else{
+			$('#attribute_table').append('<tr><td colspan=6>No data</td></tr>');
+		}
+      }
+    });
+}
+
+
+function load_video(){
+    $.ajax({
+      url: '{{ url_api }}monitoring/video/area/{{session["area_id"]}}',
+      type: 'GET',
+      
+      headers: {
+        "Authorization":'{{session["Authorization"]}}' 
+      },
+      
+      //dataType: 'json',
+      contentType: 'application/json',
+      complete: function(response) {
+        //console.log(response);
+	    if (response.status == 200){
+			data = response.responseJSON.data;
+			//console.log(response.responseJSON);
+			j = 1;
+			$.each(data, function(i, v) {
+				//console.log(i + " " + v.id + ' ' + v.name);
+				uploaded= v.timestamp.replace("T"," ").substr(0, 19);//dateConverter(v.uploaded_on);
+				//console.log(v);
+				if(v.status.id == 1){
+					link = "{{ url_for('home.check_video', id=1) }}".replace("1",v.id);
+					action = "<a href=\""+ link +"\" class=\"w3-bar-item w3-button w3-blue\">Verify</a>";
+				}else{
+					action = "";
+				}
+				$('#video_table').append('<tr><td>'+j+'</td><td>'+v.buildings.gml_id+'</td><td>'+v.video_file+'</td><td>'+uploaded+'</td><td>'+v.status.status_name+'</td><td>'+ action +'</td>');
+				j++;
+			});
+        }else{
+			$('#attribute_table').append('<tr><td colspan=6>No data</td></tr>');
+		}
+		//console.log(data.type.name);
+      }
+    });
+}
+
+
+
+$( document ).ready(function() {
+	load_profile();
+	load_gml();
+	load_attribute();
+	load_photo();
+	load_video();
+
+});
+</script>
+{% endblock %}

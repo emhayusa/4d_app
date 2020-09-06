@@ -1,0 +1,39 @@
+{% extends 'main.html' %}
+
+{% block content %}
+
+<div class="w3-row-padding" style="padding-top:20px; min-height:480px;">
+	<div class="w3-container w3-padding-32" id="login">
+		<h3 class="w3-border-bottom w3-border-light-grey w3-padding-16">Upload 3D Building (CityGml)</h3>
+    </div>
+	<div class="w3-col l6">
+		<div class="w3-col l6">
+			{% with messages = get_flashed_messages() %}
+			{% if messages %}
+				<ul class="flashes">
+					{% for message in messages %}
+					<div class="message_flash"><p class="w3-text-red">{{ message }}</p></div>
+					{% endfor %}
+				</ul>
+			{% endif %}
+			{% endwith %}
+			<div class="col-sm-4">
+				<p> <a href="{{ url_for('home.contributor') }}" class="w3-bar-item w3-button w3-green">< Back to Contributor page</a></p>
+				<form action="" method="post" enctype="multipart/form-data">
+					{{ form.hidden_tag() }}
+					 <p>
+						{{ form.file.label }} <br />
+						{{ form.file }}
+						{% for error in form.file.errors %}
+						<span style="color: red;">[{{ error }}</span>
+						{% endfor %}
+					</p>
+					<p> {{ form.submit() }}</p>
+					
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+
+{% endblock %}

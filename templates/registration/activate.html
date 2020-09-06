@@ -1,0 +1,411 @@
+{% extends 'main.html' %}
+{% block header %}
+  {% block title %}Activate{% endblock %}
+{% endblock %}
+
+{% block content %}
+<div class="main-agileinfo">
+  <div class="agileits-top">
+    <form id="target" name="target">
+      <input class="text" type="hidden" id="user_email_token" name="user_email_token" required="" value="{{ token }}">
+      <select id="affiliation" name="affiliation" class="form-control" ></select> <br/>
+      <select id="affiliation_sub" name="affiliation_sub" class="form-control"></select> <br/>
+      <select id="organization_type" name="organization_type" class="form-control"></select> <br/>
+      <select id="m_organization_id" name="m_organization_id" class="form-control"></select> <br/>
+      <input class="text" type="text" id="unit" name="unit" placeholder="Working Unit" required="">
+      <input class="text" type="text" id="position" name="position" placeholder="Position" required="">
+      <select id="country" class="form-control" ></select> <br/>
+      <select id="province" class="form-control" ></select> <br/>
+      <select id="m_city_id" class="form-control"></select> <br/>
+      <input class="text" type="text" id="address" name="address" placeholder="Address" required="">
+      <input class="text" type="text" id="postal" name="postal" placeholder="Postal" required="">
+      <input class="text" type="text" id="phone" name="phone" placeholder="Phone" required="">
+      <input class="text" type="password" id="password" name="password" placeholder="Password" required="">
+      <input class="text w3lpass" type="password" id="confirm_password" name="confirm_password" placeholder="Confirm Password" required="">
+      <div id="result"></div>
+      <input type="submit" value="ACTIVATE">
+    </form>
+    <p>Have already an account? <a href="{{ url_login }}"> Login Now!</a></p>
+  </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.4.1.js"></script>
+
+<script>
+function load_affiliation(){
+    
+    $.ajax({
+      url: '{{ url_api }}affiliation/',
+      type: 'GET',
+       /*data: JSON.stringify({
+        "username": $("#username").val(),
+        "email": $("#email").val(),
+        "first_name": $("#firstname").val(),
+        "middle_name": $("#middlename").val(),
+        "last_name": $("#lastname").val()
+      }),
+     
+      headers: {
+        "Authorization": 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1NzgwNDA0MDMsImlhdCI6MTU3Nzk1Mzk5OCwic3ViIjoyfQ.aOcc8AoywBLEslHjTpUO1RD5bPXFLmcIzpMLq5HpgCI'  
+      },
+      */
+      //dataType: 'json',
+      contentType: 'application/json',
+      complete: function(response) {    
+         //console.log(response);
+         if( response.status == 200){
+           $('#affiliation').html('');
+           $('#affiliation').append('<option disabled selected="selected">Choose Affiliation</option>');
+           $.each(response.responseJSON.data, function(i, v) {
+              //console.log(i + " " + v.id + ' ' + v.name);
+              $('#affiliation').append('<option value="'+v.id+'">'+v.name+'</option>');
+           });
+                
+           $('#affiliation').on('change', function() {
+                idx = this.value;
+                //console.log(idx);
+                load_affiliation_sub(idx);
+                
+           });
+           console.log('affiliation loaded');
+         }
+      }
+    });
+
+  }
+  function load_affiliation_sub(idx){
+    //console.log('load affiliation sub');
+    $.ajax({
+      url: '{{ url_api }}affiliation_sub/affiliation/'+idx,
+      type: 'GET',
+       /*data: JSON.stringify({
+        "username": $("#username").val(),
+        "email": $("#email").val(),
+        "first_name": $("#firstname").val(),
+        "middle_name": $("#middlename").val(),
+        "last_name": $("#lastname").val()
+      }),
+     
+      headers: {
+        "Authorization": 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1NzgwNDA0MDMsImlhdCI6MTU3Nzk1Mzk5OCwic3ViIjoyfQ.aOcc8AoywBLEslHjTpUO1RD5bPXFLmcIzpMLq5HpgCI'  
+      },
+      */
+      //dataType: 'json',
+      contentType: 'application/json',
+      complete: function(response) {    
+         //console.log(response);
+         if( response.status == 200){
+          //console.log(response.responseJSON.data.length);
+
+           
+          $('#affiliation_sub').show();
+          $('#affiliation_sub').html('');
+          //$('#affiliation_sub').append('<option disabled selected="selected">Pilih Affiliation Sub</option>');
+          $.each(response.responseJSON.data, function(i, v) {
+            //console.log(i + " " + v.id + ' ' + v.sub);
+            $('#affiliation_sub').append('<option value="'+v.id+'">'+v.sub+'</option>');
+          });
+
+          load_organization_type($('#affiliation_sub').val());
+          //console.log($('#affiliation_sub').val());
+           /*
+           $('#affiliation_sub').html('');
+           $('#affiliation_sub').append('<option disabled selected="selected">Pilih Affiliation</option>');
+           $.each(response.responseJSON.data, function(i, v) {
+              console.log(i + " " + v.id + ' ' + v.name);
+              $('#affiliation').append('<option value="'+v.id+'">'+v.name+'</option>');
+           });
+           */     
+           $('#affiliation_sub').on('change', function() {
+                idx = this.value;
+                //console.log(idx);
+                load_organization_type(idx);
+                
+           });
+         }
+      }
+    });
+
+  }
+
+  function load_organization_type(idx){
+    //console.log('load organization type');
+    $.ajax({
+      url: '{{ url_api }}organization_type_affiliation_sub/affiliation_sub/'+idx,
+      type: 'GET',
+       /*data: JSON.stringify({
+        "username": $("#username").val(),
+        "email": $("#email").val(),
+        "first_name": $("#firstname").val(),
+        "middle_name": $("#middlename").val(),
+        "last_name": $("#lastname").val()
+      }),
+     
+      headers: {
+        "Authorization": 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1NzgwNDA0MDMsImlhdCI6MTU3Nzk1Mzk5OCwic3ViIjoyfQ.aOcc8AoywBLEslHjTpUO1RD5bPXFLmcIzpMLq5HpgCI'  
+      },
+      */
+      //dataType: 'json',
+      contentType: 'application/json',
+      complete: function(response) {    
+         //console.log(response);
+         if( response.status == 200){
+           $('#organization_type').html('');
+           //$('#organization_type').append('<option disabled selected="selected">Pilih Organization Type</option>');
+           $.each(response.responseJSON.data, function(i, v) {
+              //console.log(i + " " + v.id + ' ' + v.m_organization_type.type);
+              $('#organization_type').append('<option value="'+v.m_organization_type.id+'">'+ v.m_organization_type.type+'</option>');
+           });
+           load_organization($('#organization_type').val());
+           //console.log($('#organization_type').val());                 
+           $('#organization_type').on('change', function() {
+                idx = this.value;
+                //console.log(idx);
+                load_organization(idx);
+           });
+         }
+      }
+    });
+
+  }
+
+  function load_organization(idx){
+    //console.log('load organization');
+    $.ajax({
+      url: '{{ url_api }}organization/organization_type/'+idx,
+      type: 'GET',
+       /*data: JSON.stringify({
+        "username": $("#username").val(),
+        "email": $("#email").val(),
+        "first_name": $("#firstname").val(),
+        "middle_name": $("#middlename").val(),
+        "last_name": $("#lastname").val()
+      }),
+     
+      headers: {
+        "Authorization": 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1NzgwNDA0MDMsImlhdCI6MTU3Nzk1Mzk5OCwic3ViIjoyfQ.aOcc8AoywBLEslHjTpUO1RD5bPXFLmcIzpMLq5HpgCI'  
+      },
+      */
+      //dataType: 'json',
+      contentType: 'application/json',
+      complete: function(response) {    
+         //console.log(response);
+         if( response.status == 200){
+           $('#m_organization_id').html('');
+          // $('#organization').append('<option disabled selected="selected">Pilih Organization</option>');
+           $.each(response.responseJSON.data, function(i, v) {
+              //console.log(i + " " + v.id + ' ' + v.type);
+              $('#m_organization_id').append('<option value="'+v.id+'">'+v.name+'</option>');
+           });
+                
+           /*
+           $('#organization').on('change', function() {
+                idx = this.value;
+                console.log(idx);
+                load_organization(idx);
+           });
+           */
+         }
+      }
+    });
+
+  }
+
+  function load_country(){
+    //console.log('load country');
+    $.ajax({
+      url: '{{ url_api }}country/',
+      type: 'GET',
+       /*data: JSON.stringify({
+        "username": $("#username").val(),
+        "email": $("#email").val(),
+        "first_name": $("#firstname").val(),
+        "middle_name": $("#middlename").val(),
+        "last_name": $("#lastname").val()
+      }),
+     
+      headers: {
+        "Authorization": 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1NzgwNDA0MDMsImlhdCI6MTU3Nzk1Mzk5OCwic3ViIjoyfQ.aOcc8AoywBLEslHjTpUO1RD5bPXFLmcIzpMLq5HpgCI'  
+      },
+      */
+      //dataType: 'json',
+      contentType: 'application/json',
+      complete: function(response) {    
+         //console.log(response);
+         if( response.status == 200){
+           $('#country').html('');
+           $('#country').append('<option disabled selected="selected">Choose Country</option>');
+           $.each(response.responseJSON.data, function(i, v) {
+              //console.log(i + " " + v.id + ' ' + v.name);
+              $('#country').append('<option value="'+v.id+'">'+v.name+'</option>');
+           });
+                
+           $('#country').on('change', function() {
+                idx = this.value;
+                //console.log(idx);
+                load_province(idx);
+                
+           });
+         }
+      }
+    });
+  }
+  function load_province(idx){
+    //console.log('load province');
+    $.ajax({
+      url: '{{ url_api }}province/country/'+idx,
+      type: 'GET',
+       /*data: JSON.stringify({
+        "username": $("#username").val(),
+        "email": $("#email").val(),
+        "first_name": $("#firstname").val(),
+        "middle_name": $("#middlename").val(),
+        "last_name": $("#lastname").val()
+      }),
+     
+      headers: {
+        "Authorization": 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1NzgwNDA0MDMsImlhdCI6MTU3Nzk1Mzk5OCwic3ViIjoyfQ.aOcc8AoywBLEslHjTpUO1RD5bPXFLmcIzpMLq5HpgCI'  
+      },
+      */
+      //dataType: 'json',
+      contentType: 'application/json',
+      complete: function(response) {    
+         //console.log(response);
+         if( response.status == 200){
+           //console.log(response.responseJSON.data.length);
+           
+          $('#province').html('');
+          //$('#affiliation_sub').append('<option disabled selected="selected">Pilih Affiliation Sub</option>');
+          $.each(response.responseJSON.data, function(i, v) {
+            //console.log(i + " " + v.id + ' ' + v.name);
+            $('#province').append('<option value="'+v.id+'">'+v.name+'</option>');
+          });
+
+          load_city($('#province').val());
+          //console.log($('#province').val());
+           /*
+           $('#affiliation_sub').html('');
+           $('#affiliation_sub').append('<option disabled selected="selected">Pilih Affiliation</option>');
+           $.each(response.responseJSON.data, function(i, v) {
+              console.log(i + " " + v.id + ' ' + v.name);
+              $('#affiliation').append('<option value="'+v.id+'">'+v.name+'</option>');
+           });
+           */     
+           $('#province').on('change', function() {
+                idx = this.value;
+                //console.log(idx);
+                load_city(idx);
+                
+           });
+         }
+      }
+    });
+
+  }
+  function load_city(idx){
+    //console.log('load city');
+    $.ajax({
+      url: '{{ url_api }}city/province/'+idx,
+      type: 'GET',
+       /*data: JSON.stringify({
+        "username": $("#username").val(),
+        "email": $("#email").val(),
+        "first_name": $("#firstname").val(),
+        "middle_name": $("#middlename").val(),
+        "last_name": $("#lastname").val()
+      }),
+     
+      headers: {
+        "Authorization": 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1NzgwNDA0MDMsImlhdCI6MTU3Nzk1Mzk5OCwic3ViIjoyfQ.aOcc8AoywBLEslHjTpUO1RD5bPXFLmcIzpMLq5HpgCI'  
+      },
+      */
+      //dataType: 'json',
+      contentType: 'application/json',
+      complete: function(response) {    
+         //console.log(response);
+         if( response.status == 200){
+           //console.log(response.responseJSON.data.length);
+           
+          $('#m_city_id').html('');
+          //$('#affiliation_sub').append('<option disabled selected="selected">Pilih Affiliation Sub</option>');
+          $.each(response.responseJSON.data, function(i, v) {
+            //console.log(i + " " + v.id + ' ' + v.name);
+            $('#m_city_id').append('<option value="'+v.id+'">'+v.name+'</option>');
+          });
+
+      
+         }
+      }
+    });
+
+  }
+  function activate(){
+  $.ajax({
+    url: '{{ url_api }}user/activate/',
+    type: 'POST',
+    data: JSON.stringify({
+        "email_token": $("#user_email_token").val(),
+        "m_organization_id": parseInt($("#m_organization_id").val()),
+        "unit": $("#unit").val(),
+        "position": $("#position").val(),
+        "m_city_id": parseInt($("#m_city_id").val()),
+        "postal": $("#postal").val(),
+        "address": $("#address").val(),
+        "phone": $("#phone").val(),
+        "password": $("#password").val()
+        }),
+    /*
+    headers: {
+      "Authorization": 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1NzgwNDA0MDMsImlhdCI6MTU3Nzk1Mzk5OCwic3ViIjoyfQ.aOcc8AoywBLEslHjTpUO1RD5bPXFLmcIzpMLq5HpgCI'  
+    },
+    */
+    //dataType: 'json',
+    contentType: 'application/json',
+    complete: function(response) {
+      // console.log(response);
+     
+        // $( "#target" ).fadeIn(slow);
+        //obj = $.parseJSON(data.responseJSON);
+        //console.log(obj);
+        $( "#result" ).html('');
+        $( "#result" ).append('<p>Http Code: ' + response.status + '(' + response.statusText +')</p>');
+        $( "#result" ).append('<p>Status: ' + response.responseJSON.status + '</p>');
+        $( "#result" ).append('<p>Message: ' + response.responseJSON.message + '</p>');
+        //console.log(data.responseJSON.status);
+      
+    }
+  });
+}
+
+
+
+$( document ).ready(function() {
+  $('#affiliation_sub').hide();
+  load_affiliation();
+  load_country();
+
+  $( "#target" ).submit(function( event ) {
+    //alert( "Handler for .submit() called." );
+    //console.log('clicked {{ url_api }}' );
+    
+    if ($("#affiliation").val() == null){
+      $( "#result" ).html('');
+      $( "#result" ).append('<p>Message: Please choose Organization by select Affiliation first</p>');
+    }else{
+      if ($("#country").val() == null){
+        $( "#result" ).html('');
+        $( "#result" ).append('<p>Message: Please choose City by select Country first</p>');
+      }else {
+        if($("#password").val() == $("#confirm_password").val()){
+          activate();
+        }else{
+          $( "#result" ).html('');
+          $( "#result" ).append('<p>Message: Password and Confirm Password does not match</p>');
+        }
+      }
+    }
+    event.preventDefault();
+  });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,983 @@
+{% extends 'main.html' %}
+
+
+{% block content %}
+  <!-- About Map -->
+  <div class="w3-row" id="map" style="padding-top:52px">
+	<div id="select_area" style="background:white;width:300px;height:110px;position:absolute;top:80px;left:30px; z-index:2; padding:20px">
+		<label>Area of interest</label>
+		<select id="area_id" name="area_id" class="w3-select">
+			<option disabled="" selected="selected">Choose Area</option>
+		</select>
+	</div>
+	<div id="management" style="background:white;width:300px;min-height:140px;position:absolute;top:200px;left:30px; z-index:2; padding:0px 20px 20px 20px;">
+		
+	</div>
+	{% if 'username' in session %}
+			{% if session["type_id"] == 2 %}
+				<div id="uploader" style="background:white;width:300px;height:80px;position:absolute;top:440px;left:30px; z-index:2; padding:20px">
+					<a href="{{ url_for('home.upload_gml') }}" class="w3-bar-item w3-button w3-blue">Upload 3d building (CityGml)</a>
+				</div>
+			{% endif %}
+	{% endif %}
+	<div id="cesiumContainer" style="width:100%; height:700px"></div>
+	
+  </div>
+  <!-- The Modal -->
+
+<div id="id01" class="w3-modal">
+ <div class="w3-modal-content w3-card-4 w3-animate-zoom">
+  <header class="w3-container w3-blue"> 
+   <span onclick="document.getElementById('id01').style.display='none'" 
+   class="w3-button w3-blue w3-xlarge w3-display-topright">&times;</span>
+   <h2 id="gml_id_entity">History of Entity</h2>
+  </header>
+  <div class="w3-bar w3-border-bottom">
+   <button class="tablink w3-bar-item w3-button w3-light-grey" onclick="openInfo(event, 'Attribute')">Attribute</button>
+   <button class="tablink w3-bar-item w3-button" onclick="openInfo(event, 'Photo')">Photo</button>
+   <button class="tablink w3-bar-item w3-button" onclick="openInfo(event, 'Video')">Video</button>
+  </div>
+
+  <div id="Attribute" class="w3-container info">
+   <h1>Attribute</h1>
+   <div id="attribut_history"></div>
+  </div>
+
+  <div id="Photo" class="w3-container info">
+   <h1>Photo</h1>
+   <div id="photo_history"></div>
+  </div>
+
+  <div id="Video" class="w3-container info">
+   <h1>Video</h1>
+   <div id="video_history"></div>
+  </div>
+
+  <div class="w3-container w3-light-grey w3-padding">
+   <button class="w3-button w3-right w3-white w3-border" 
+   onclick="document.getElementById('id01').style.display='none'">Close</button>
+  </div>
+ </div>
+</div>
+	
+<!-- <script src=".{{ url_for('static', filename='js/CitydbKmlLayer.js') }}"></script> -->
+<script>
+	var imageryProviders = Cesium.createDefaultImageryProviderViewModels();
+	var selectedImageryProviderIndex = 2;  // MapBox Street is 5th in the list.
+	// Create a clock that loops on Christmas day 2013 and runs in real-time.
+	var clock = new Cesium.Clock({
+	   startTime : Cesium.JulianDate.fromIso8601("2016-09-01"),
+	   currentTime : Cesium.JulianDate.fromIso8601("2016-09-01T03.0000Z"),
+	   stopTime : Cesium.JulianDate.fromIso8601("2016-09-30"),
+	   clockRange : Cesium.ClockRange.LOOP_STOP,
+	   clockStep : Cesium.ClockStep.SYSTEM_CLOCK_MULTIPLIER
+	});
+
+	var extent = Cesium.Rectangle.fromDegrees(95,-11,141,6);
+
+	Cesium.Camera.DEFAULT_VIEW_RECTANGLE = extent;
+	Cesium.Camera.DEFAULT_VIEW_FACTOR = 1;
+
+
+	var viewer = new Cesium.Viewer('cesiumContainer', {
+		clockViewModel: new Cesium.ClockViewModel(clock),
+		imageryProviderViewModels: imageryProviders,
+		selectedImageryProviderViewModel: imageryProviders[selectedImageryProviderIndex]
+	});
+	
+	//viewer.infoBox.frame.sandbox = "allow-same-origin allow-top-navigation allow-pointer-lock allow-popups allow-forms allow-scripts";
+	//console.log(viewer.infoBox.frame.sandbox);
+	
+	function openInfo(evt, infoName) {
+	  var i, x, tablinks;
+	  x = document.getElementsByClassName("info");
+	  for (i = 0; i < x.length; i++) {
+		x[i].style.display = "none";
+	  }
+	  $('.tablink').each(function(i, obj) {
+			//test
+			//console.log(obj);
+			$(obj).removeClass('w3-light-grey');
+	  });
+	  //tablinks = document.getElementsByClassName("tablink");
+	  //for (i = 0; i < x.length; i++) {
+		//tablinks[i].classList.remove("w3-light-grey");
+	  //}
+	  document.getElementById(infoName).style.display = "block";
+	  $(evt.currentTarget).addClass("w3-light-grey");
+	  //evt.currentTarget.classList.add("w3-light-grey");
+	}
+	
+	function save_entity(entity){
+		
+		test = entity.name.split(": ");
+		ID = test[1];
+		//console.log($("table.cesium-infoBox-defaultTable"));
+		//console.log(viewer.infoBox.frame.contentDocument);
+		//alert(document.querySelector("#name"));
+		//console.log($("iframe.cesium-infoBox-iframe").contents().find("input"));
+		var inputs = $("iframe.cesium-infoBox-iframe").contents().find("input");
+		//console.log();
+		//load_entity(entity);
+		//console.log($("#").)
+		
+		$.ajax({
+		  url: '{{ url_api }}monitoring/attribute',
+		  type: 'POST',
+		  data: JSON.stringify({
+			"name": $(inputs[0]).val(),
+			"function": $(inputs[1]).val(),
+			"height": parseInt($(inputs[2]).val()),
+			"user_id": '{{session["public_id"]}}',
+			"gml_id": ID,
+		  }),
+		  headers: {
+			"Authorization":'{{session["Authorization"]}}' 
+		  },
+		  //dataType: 'json',
+		  contentType: 'application/json',
+		  complete: function(response) {
+			 //console.log(response);
+			 if (response.status == 201){
+				alert('Successfully saved. It will be reviewed by the validator');
+			 }
+		  }
+		});
+	}
+
+	function save_photo(entity){
+		//alert('aaaa');
+		test = entity.name.split(": ");
+		ID = test[1];
+
+		console.log(ID);
+		var fd = new FormData();
+		//var inputs = $("iframe.cesium-infoBox-iframe").contents().find("input");
+		var files = $("iframe.cesium-infoBox-iframe").contents().find("#photo")[0].files[0];
+        fd.append('photo_file',files);
+        fd.append('gml_id',ID);
+		console.log(files);
+		console.log(fd);
+		
+		$.ajax({
+		  url: '{{ url_for("home.upload_photo") }}',
+		  type: 'POST',
+		  data: fd,
+		  contentType: false,
+          processData: false,
+		  //dataType: 'json',
+		  complete: function(response) {
+			 //console.log(response);
+			 if (response.status == 201){
+				alert('Saved successfully. It will be reviewed soon. Check contributor page.');
+			 }else{
+				alert(response.status);
+			 }
+		  }
+		});
+	}
+	
+	function save_video(entity){
+		//alert('aaaa');
+		test = entity.name.split(": ");
+		ID = test[1];
+
+		console.log(ID);
+		var fd = new FormData();
+		//var inputs = $("iframe.cesium-infoBox-iframe").contents().find("input");
+		var files = $("iframe.cesium-infoBox-iframe").contents().find("#video")[0].files[0];
+        fd.append('video_file',files);
+        fd.append('gml_id',ID);
+		console.log(files);
+		console.log(fd);
+		
+		$.ajax({
+		  url: '{{ url_for("home.upload_video") }}',
+		  type: 'POST',
+		  data: fd,
+		  contentType: false,
+          processData: false,
+		  //dataType: 'json',
+		  complete: function(response) {
+			 //console.log(response);
+			 if (response.status == 201){
+				alert('Saved successfully. It will be reviewed soon. Check contributor page.');
+			 }else{
+				alert(response.status);
+			 }
+		  }
+		});
+	}
+	
+	
+	function load_history(entity){
+		//alert('aa ' + entity);
+		$('#id01').css("display","block");
+		test = entity.name.split(": ");
+		ID = test[1];
+		$("#gml_id_entity").html("History of Entity (GML ID: " + ID + ")");
+		$.ajax({
+		  url: '{{ url_api }}monitoring/attribute/gml_list/'+ID,
+		  type: 'GET',
+		  /*
+		  headers: {
+			"Authorization": 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1NzgwNDA0MDMsImlhdCI6MTU3Nzk1Mzk5OCwic3ViIjoyfQ.aOcc8AoywBLEslHjTpUO1RD5bPXFLmcIzpMLq5HpgCI'  
+		  },
+		  */
+		  //dataType: 'json',
+		  contentType: 'application/json',
+		  complete: function(response) {
+				data = response.responseJSON;
+				//console.log(data);
+				$('#attribut_history').html("");
+				$('#attribut_history').append("<table class='w3-table w3-striped' id='tbl'>");
+				$('#tbl').append("<tr><th>No</th><th>Name</th><th>Function</th><th>Height</th><th>Date</th><th>Updated By</th></tr>");
+				var j = 1;
+				if(data.data.length > 0){
+				$.each(data.data, function(i, v) {
+					//console.log(i + " " + v.buildings.gml_id + ' ' + v.function + ' ' + v.height + ' ' + v.name + ' ' + v.timestamp.replace("T"," ").substr(0, 19));
+					$('#tbl').append("<tr><td>"+ j + "</td><td>"+ v.name+ "</td><td>"+ v.function+ "</td><td>"+ v.height+ "</td><td>"+ v.timestamp.replace("T"," ").substr(0, 19)+"</td><td>" + v.contributor + "</td></tr>");
+					j++;
+					//console.log(v.id + " " + v.name);
+					//$('#attribut_history').append(v);
+				});
+				}else{
+					$('#tbl').append("<tr><td colspan='6'>No data found</td></tr>");
+				}
+				//$('#attribut_history').append("</table>");
+				//<video id="peta-13" controls=""> <source src="video/video_analisis.mp4" type="video/mp4"> Your browser does not support HTML video.</video>
+		
+		  }
+		});
+		$.ajax({
+		  url: '{{ url_api }}monitoring/photo/gml_list/'+ID,
+		  type: 'GET',
+		  /*
+		  headers: {
+			"Authorization": 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1NzgwNDA0MDMsImlhdCI6MTU3Nzk1Mzk5OCwic3ViIjoyfQ.aOcc8AoywBLEslHjTpUO1RD5bPXFLmcIzpMLq5HpgCI'  
+		  },
+		  */
+		  //dataType: 'json',
+		  contentType: 'application/json',
+		  complete: function(response) {
+				data = response.responseJSON;
+				//console.log(data);
+				$('#photo_history').html("");
+				$('#photo_history').append("<table class='w3-table w3-striped' id='tbl2'>");
+				$('#tbl2').append("<tr><th>No</th><th>Photo</th><th>Date</th><th>Updated By</th></tr>");
+				var j = 1;
+				if(data.data.length > 0){
+				$.each(data.data, function(i, v) {
+					//console.log(i + " " + v.buildings.gml_id + ' ' + v.function + ' ' + v.height + ' ' + v.name + ' ' + v.timestamp.substr(0, 10));
+					$('#tbl2').append("<tr><td>"+ j + "</td><td><img src='" + "{{ url_for('static', filename='data/photos/1')}}".replace(1,v.photo_file)+"' width='200' height='100'></td><td>"+ v.timestamp.replace("T"," ").substr(0, 19)+"</td><td>" + v.contributor + "</td></tr>");
+					j++;
+					//console.log(v.id + " " + v.name);
+					//$('#attribut_history').append(v);
+				});
+				}else{
+					$('#tbl2').append("<tr><td colspan='4'>No data found</td></tr>");
+				}
+				//$('#attribut_history').append("</table>");
+				//<video id="peta-13" controls=""> <source src="video/video_analisis.mp4" type="video/mp4"> Your browser does not support HTML video.</video>
+		
+		  }
+		});
+		$.ajax({
+		  url: '{{ url_api }}monitoring/video/gml_list/'+ID,
+		  type: 'GET',
+		  /*
+		  headers: {
+			"Authorization": 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1NzgwNDA0MDMsImlhdCI6MTU3Nzk1Mzk5OCwic3ViIjoyfQ.aOcc8AoywBLEslHjTpUO1RD5bPXFLmcIzpMLq5HpgCI'  
+		  },
+		  */
+		  //dataType: 'json',
+		  contentType: 'application/json',
+		  complete: function(response) {
+				data = response.responseJSON;
+				//console.log(data);
+				$('#video_history').html("");
+				$('#video_history').append("<table class='w3-table w3-striped' id='tbl3'>");
+				$('#tbl3').append("<tr><th>No</th><th>Video</th><th>Date</th><th>Updated By</th></tr>");
+				var j = 1;
+				if(data.data.length > 0){
+				$.each(data.data, function(i, v) {
+					//console.log(i + " " + v.buildings.gml_id + ' ' + v.function + ' ' + v.height + ' ' + v.name + ' ' + v.timestamp.substr(0, 10));
+					$('#tbl3').append("<tr><td>"+ j + "</td><td><video width='200' height='100' controls=''><source src='" + "{{ url_for('static', filename='data/videos/1')}}".replace(1,v.video_file)+"' width='200' height='100' type='video/mp4'> Your browser does not support HTML video.</video></td><td>"+ v.timestamp.replace("T"," ").substr(0, 19)+"</td><td>" + v.contributor+ "</td></tr>");
+					j++;
+					//console.log(v.id + " " + v.name);
+					//$('#attribut_history').append(v);
+				});
+				}else{
+					$('#tbl3').append("<tr><td colspan='4'>No data found</td></tr>");
+				}
+				//$('#attribut_history').append("</table>");
+				//<video id="peta-13" controls=""> <source src="video/video_analisis.mp4" type="video/mp4"> Your browser does not support HTML video.</video>
+		
+		  }
+		});
+	}
+
+	
+	function load_entity(entity){
+		
+		//load_area();
+		entity.description = "loading...";
+		test = entity.name.split("_");
+		ID = test[0];
+		entity.name = "GML ID: " + ID;
+		$.ajax({
+		  url: '{{ url_api }}monitoring/attribute/gml/'+ID,
+		  type: 'GET',
+		  /*
+		  headers: {
+			"Authorization": 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1NzgwNDA0MDMsImlhdCI6MTU3Nzk1Mzk5OCwic3ViIjoyfQ.aOcc8AoywBLEslHjTpUO1RD5bPXFLmcIzpMLq5HpgCI'  
+		  },
+		  */
+		  //dataType: 'json',
+		  contentType: 'application/json',
+		  complete: function(response) {
+			//console.log(response);
+			data = response.responseJSON;
+			//console.log(data);
+			//$.each(response.responseJSON.data, function(i, v) {
+				  //console.log(i + " " + v.id + ' ' + v.name);
+				//$('#area_id').append('<option value="'+v.id+'">'+v.area_name+'</option>');
+				//console.log(v.id + " " + v.name);
+			//});
+			//console.log(data);
+			NAME = data.name == null? " ": data.name;
+			//console.log(NAME);
+			//console.log(typeof(NAME));
+			REMARK = data.function == null? " ": data.function;
+			HEIGHT = data.height  == null? " ": data.height;
+			
+			$.ajax({
+			  url: '{{ url_api }}monitoring/photo/gml/'+ID,
+			  type: 'GET',
+			  /*
+			  headers: {
+				"Authorization": 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1NzgwNDA0MDMsImlhdCI6MTU3Nzk1Mzk5OCwic3ViIjoyfQ.aOcc8AoywBLEslHjTpUO1RD5bPXFLmcIzpMLq5HpgCI'  
+			  },
+			  */
+			  //dataType: 'json',
+			  contentType: 'application/json',
+			  complete: function(response) {
+					//console.log(response);
+					data = response.responseJSON;
+					photo = data.photo_file == null?  "{{ url_for('static', filename='no_image.png')}}": "{{ url_for('static', filename='data/photos/1')}}".replace(1,data.photo_file);
+					PHOTO  = '<img id="img" src="'+ photo +'" width="200" height="100">';
+					//console.log(PHOTO);
+					$.ajax({
+					  url: '{{ url_api }}monitoring/video/gml/'+ID,
+					  type: 'GET',
+					  /*
+					  headers: {
+						"Authorization": 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1NzgwNDA0MDMsImlhdCI6MTU3Nzk1Mzk5OCwic3ViIjoyfQ.aOcc8AoywBLEslHjTpUO1RD5bPXFLmcIzpMLq5HpgCI'  
+					  },
+					  */
+					  //dataType: 'json',
+					  contentType: 'application/json',
+					  complete: function(response) {
+						data = response.responseJSON;
+						if (data.video_file == null)
+							VIDEO  = '<img src="{{ url_for('static', filename='no_video.png')}}" width="200" height="100">';
+						else 
+							VIDEO  = '<video width="200" height="100" controls=""><source src="'+'{{ url_for('static', filename='data/videos/1')}}'.replace(1,data.video_file)+'" type="video/mp4"> Your browser does not support HTML video.</video>'; 						console.log(VIDEO);
+						{% if 'username' in session %}
+							{% if session["type_id"] < 3 %}
+								var description = '<table class="cesium-infoBox-defaultTable cesium-infoBox-defaultTable-lighter"><tbody>' +
+									 '<tr><td>' + "Id" + '</td><td>' + ID + '</td></tr>' +
+									 '<tr><td>' + "Name" + '</td><td><input class="w3-input w3-border" id="name" name="name" type="text" value="'+ NAME +'"></td></tr>' +
+									 '<tr><td>' + "Function" + '</td><td><input class="w3-input w3-border" id="function" name="function" type="text" value="'+ REMARK +'"></td></td></tr>' +
+									 '<tr><td>' + "Height" + '</td><td><input class="w3-input w3-border" id="height" name="height" type="text" value="'+ HEIGHT +'"> m</td></td></tr>' +
+									 '<tr><td></td><td><button class="w3-button w3-blue" id="save">Save</button></td></tr>' +
+									 '<tr><td>' + "Photo" + '</td><td>'+ PHOTO + '</td></tr>' +
+									 '<tr><td></td><td><input type="file" id="photo" name="photo"></td></tr>' +
+									 '<tr><td></td><td><button class="w3-button w3-blue" id="photo_btn">Upload Photo</button></td></tr>' +
+									 '<tr><td>' + "Video" + '</td><td>'+ VIDEO + '</td></tr>' +
+									 '<tr><td></td><td><input type="file" id="video" name="video"></td></tr>' +
+									 '<tr><td></td><td><button class="w3-button w3-blue" id="video_btn">Upload Video</button></td></tr>' +
+									 '<tr><td></td><td><button class="w3-button w3-blue" id="history_btn">History of this entity</button></td></tr>' +
+									 '</tbody></table>';
+							{% else %}
+								var description = '<table class="cesium-infoBox-defaultTable cesium-infoBox-defaultTable-lighter"><tbody>' +
+									 '<tr><td>' + "Id" + '</td><td>' + ID + '</td></tr>' +
+									 '<tr><td>' + "Name" + '</td><td>'+ NAME +'</td></tr>' +
+									 '<tr><td>' + "Function" + '</td><td>'+ REMARK +'</td></td></tr>' +
+									 '<tr><td>' + "Height" + '</td><td>'+ HEIGHT +'</td></td></tr>' +
+									 '<tr><td>' + "Photo" + '</td><td>'+ PHOTO + '</td></tr>' +
+									 '<tr><td>' + "Video" + '</td><td>'+ VIDEO + '</td></tr>' +
+									 '<tr><td></td><td><button class="w3-button w3-blue" id="history_btn">History of this entity</button></td></tr>' +
+									 '</tbody></table>';
+
+							{% endif %}	
+						{% else %}
+								var description = '<table class="cesium-infoBox-defaultTable cesium-infoBox-defaultTable-lighter"><tbody>' +
+									 '<tr><td>' + "Id" + '</td><td>' + ID + '</td></tr>' +
+									 '<tr><td>' + "Name" + '</td><td>'+ NAME +'</td></tr>' +
+									 '<tr><td>' + "Function" + '</td><td>'+ REMARK +'</td></td></tr>' +
+									 '<tr><td>' + "Height" + '</td><td>'+ HEIGHT +'</td></td></tr>' +
+									 '<tr><td>' + "Photo" + '</td><td>'+ PHOTO + '</td></tr>' +
+									 '<tr><td>' + "Video" + '</td><td>'+ VIDEO + '</td></tr>' +
+									 '<tr><td></td><td><button class="w3-button w3-blue" id="history_btn">History of this entity</button></td></tr>' +
+									 '</tbody></table>';
+
+						{% endif %}
+						
+						
+						entity.description = description;
+					}
+					});
+			  }
+			 });
+			  
+			
+		  }
+		});
+		
+		
+		
+	}
+	
+    Cesium.knockout.getObservable(viewer, '_selectedEntity').subscribe(function(entity) {
+        if (!Cesium.defined(entity)) {
+            //console.log('De-selected entity.');
+        } else {
+            //console.log('Selected entity ' + (entity.name || entity.id));
+			load_entity(entity)
+			//entity.description = (entity.name || entity.id) + "<br /> <button class='w3-button w3-blue' id='save'>Save</button></td>";
+			//load_area();
+        }
+    });
+	
+	viewer.infoBox.frame.addEventListener('load', function() {
+				//
+				// Now that the description is loaded, register a click listener inside
+				// the document of the iframe.
+				//
+				//console.log('yyyyyy');
+				
+				viewer.infoBox.frame.contentDocument.body.addEventListener('click', function(e) {
+					//
+					// The document body will be rewritten when the selectedEntity changes,
+					// but this body listener will survive.  Now it must determine if it was
+					// one of the clickable buttons.
+					//
+					
+					if (e.target && e.target.id === 'save') {
+						entity = viewer.selectedEntity;
+						save_entity(entity);
+					}
+
+					if (e.target && e.target.id === 'photo_btn') {
+						entity = viewer.selectedEntity;
+						save_photo(entity);	
+					}
+					
+					if (e.target && e.target.id === 'video_btn') {
+						entity = viewer.selectedEntity;
+						save_video(entity);	
+					}
+					
+					if (e.target && e.target.id === 'history_btn') {
+						entity = viewer.selectedEntity;
+						load_history(entity);
+					}
+				}, false);
+			}, false);
+			
+	var kota = [ "Bandung", "Jakarta Barat", "Jakarta Pusat", "Jakarta Selatan", "Jakarta Timur", "Jakarta Utara" ];
+	d1="data/spatplan/bandung/spatplan2d/GenericCityObject/tileset.json";
+	d2="data/spatplan/jakarta/spatplan2d_0/GenericCityObject/tileset.json";
+	var spatial_plan = [d1, d2, d2, d2, d2, d2];
+	t1 =  [["${lutype} === 'administration office'", "rgba(255, 175, 125, 1.0)"],
+					  ["${lutype} === 'education'", "rgba(240, 175, 125, 1.0)"],
+					  ["${lutype} === 'electric substation'", "rgba(230, 175, 125, 1.0)"],
+					  ["${lutype} === 'high voltage area'", "rgba(230, 175, 125, 1.0)"],
+					  ["${lutype} === 'wastewater treatment'", "rgba(175, 175, 230, 1.0)"],
+					  ["${lutype} === 'socio cultur'", "rgba(175, 230, 125, 1.0)"],
+					  ["${lutype} === 'health services'", "rgba(175, 175, 125, 1.0)"],
+					  ["${lutype} === 'sport'", "rgba(175, 175, 125, 1.0)"],
+					  ["${lutype} === 'power plant'", "rgba(230, 175, 125, 1.0)"],
+					  ["${lutype} === 'religious'","rgba(175, 175, 125, 1.0)"],
+					  
+					  
+					  ["${lutype} === 'natural conservation'", "rgba(100, 255, 100, 1.0)"],
+					  ["${lutype} === 'natural preservation'", "rgba(100, 255, 100, 1.0)"],
+					  ["${lutype} === 'open green privat'", "rgba(125, 255, 100, 1.0)"],
+					  ["${lutype} === 'open green public'", "rgba(125, 255, 100, 1.0)"],
+					  ["${lutype} === 'open public space'", "rgba(125, 255, 100, 1.0)"],
+					  ["${lutype} === 'urban forest'", "rgba(100, 255, 100, 1.0)"],
+					  
+					  ["${lutype} === 'pond'", "rgba(175, 175, 255, 1.0)"],
+					  ["${lutype} === 'lake'", "rgba(175, 175, 255, 1.0)"],
+									
+					  ["${lutype} === 'agriculture'", "rgba(255, 175, 175, 1.0)"],
+					  ["${lutype} === 'cemetery'", "rgba(255, 175, 175, 1.0)"],
+					  ["${lutype} === 'airfield area'", "rgba(255, 175, 175, 1.0)"],
+					  ["${lutype} === 'toll road area'", "rgba(255, 175, 175, 1.0)"],
+					  ["${lutype} === 'rail area'", "rgba(255, 175, 175, 1.0)"],
+					  ["${lutype} === 'recreation'","rgba(255, 175, 175, 1.0)"],
+					  ["${lutype} === 'road area'","rgba(255, 175, 175, 1.0)"],
+					  
+					  ["${lutype} === 'river area'", "rgba(100, 100, 175, 1.0)"],
+					  
+					  ["${lutype} === 'road'", "rgba(50, 50, 50, 1.0)"],  
+					  ["${lutype} === 'transportation'", "rgba(100, 100, 100, 1.0)"], 
+					  
+					  ["${lutype} === 'mixed - high intensity'", "rgba(255, 230, 51, 1.0)"], 
+					  ["${lutype} === 'mixed - medium intensity'","rgba(255, 210, 51, 1.0)"], 
+					  ["${lutype} === 'industry and commercial'", "rgba(255, 255, 51, 1.0)"], 
+					  ["${lutype} === 'commercial and linier services'","rgba(255, 185, 51, 1.0)"],
+					  ["${lutype} === 'commercial centre and services'","rgba(255, 145, 51, 1.0)"],
+					  ["${lutype} === 'traditional market'", "rgba(255, 150, 51, 1.0)"],
+					  
+					  ["${lutype} === 'residential - high density'", "rgba(200, 100, 51, 1.0)"],
+					  ["${lutype} === 'residential - low density'", "rgba(200, 175, 51, 1.0)"],
+					  ["${lutype} === 'residential - medium density'", "rgba(200, 150, 51, 1.0)"],
+					  
+						['true', 'color("blue")']]
+	t2 =  [
+					  ["${lutype} === 'Residential - low density'", "rgba(200, 175, 51, 1.0)"],
+					  ["${lutype} === 'Residential - vertical low density'", "rgba(225, 150, 51, 1.0)"],
+					  ["${lutype} === 'Residential - vertical'", "rgba(175, 150, 51, 1.0)"],
+					  ["${lutype} === 'Residential - vertical medium density'", "rgba(200, 150, 51, 1.0)"], 
+					  ["${lutype} === 'Residential - kampoong'", "rgba(200, 100, 51, 1.0)"],
+					  
+					  ["${lutype} === 'Industry'", "rgba(255, 255, 51, 1.0)"],
+					  ["${lutype} === 'Industry and warehouse'","rgba(255, 185, 51, 1.0)"],
+					  ["${lutype} === 'Mixed'","rgba(255, 145, 51, 1.0)"],
+					  
+					  ["${lutype} === 'Business, commercials and services - Low density'","rgba(255, 210, 51, 1.0)"], 
+					  ["${lutype} === 'Business, commercials and services'", "rgba(255, 230, 51, 1.0)"], 
+					  
+					  ["${lutype} === 'Reclamation zone'", "rgba(100, 175, 175, 1.0)"],     
+					  ["${lutype} === 'Open space blue'", "rgba(100, 100, 175, 1.0)"],
+					  
+					  ["${lutype} === 'Cemetery'", "rgba(255, 175, 175, 1.0)"],
+					  ["${lutype} === 'Urban forest'", "rgba(100, 255, 100, 1.0)"],
+					  ["${lutype} === 'Park'", "rgba(100, 255, 100, 1.0)"],
+					  ["${lutype} === 'Green and Recreation'", "rgba(125, 255, 100, 1.0)"],
+					  ["${lutype} === 'Green corridor'", "rgba(125, 255, 100, 1.0)"],
+					  ["${lutype} === 'Protection zone'", "rgba(125, 255, 100, 1.0)"],
+					  
+					  ["${lutype} === 'Government - local'","rgba(175, 175, 125, 1.0)"],
+					  ["${lutype} === 'Government -  national'","rgba(175, 175, 125, 1.0)"],
+					  ["${lutype} === 'Diplomatic zone'", "rgba(230, 175, 125, 1.0)"],
+					  ["${lutype} === 'Public and social services'", "rgba(175, 175, 125, 1.0)"],
+					  
+					  ['true', 'color("blue")']
+					];
+	var template = [t1, t2, t2, t2, t2, t2];
+	var bbox = [
+				[107.594261,-6.904013,107.594261,-6.882041,107.626705,-6.882041,107.626705,-6.904013,107.594261,-6.904013],
+				[106.750923,-6.197478,106.750923,-6.161318,106.800362,-6.161318,106.800362,-6.197478,106.750923,-6.197478],
+				[106.818438,-6.184083,106.818438,-6.169925,106.837406,-6.169925,106.837406,-6.184083,106.818438,-6.184083],
+				[106.825974,-6.268585,106.825974,-6.233111,106.888973,-6.233111,106.888973,-6.268585,106.825974,-6.268585],
+				[106.843895,-6.210756,106.843895,-6.153615,106.933674,-6.153615,106.933674,-6.210756,106.843895,-6.210756],
+				[106.798611,-6.168329,106.798611,-6.126537,106.862469,-6.126537,106.862469,-6.168329,106.798611,-6.168329]
+			   ];
+	
+	
+	var entities = [];
+	
+	for (i = 0; i < kota.length; i++){
+		//console.log(kota[i]);
+		a = viewer.entities.add({
+				polygon : {
+				hierarchy : Cesium.Cartesian3.fromDegreesArray(bbox[i]),
+				height : 0,
+				material : Cesium.Color.RED.withAlpha(0),
+				outline : true,
+				outlineColor : Cesium.Color.BLACK.withAlpha(0)
+				}
+			});
+		entities.push(a);
+		$('#area_id').append('<option value="'+ i +'">'+kota[i]+'</option>');
+	}
+	//console.log(entities[0]);
+	/*
+	var bandung = viewer.entities.add({
+	  polygon : {
+		hierarchy : Cesium.Cartesian3.fromDegreesArray(),
+		height : 0,
+		material : Cesium.Color.RED.withAlpha(0),
+		outline : true,
+		outlineColor : Cesium.Color.BLACK.withAlpha(0)
+	  }
+	});
+	//106.750923,-6.197478,106.800362,-6.161318
+	var jakarta_barat = viewer.entities.add({
+	  polygon : {
+		hierarchy : Cesium.Cartesian3.fromDegreesArray([
+								  106.750923,-6.197478,
+								  106.750923,-6.161318,
+								  106.800362,-6.161318,
+								  106.800362,-6.197478,
+								  106.750923,-6.197478]),
+		height : 0,
+		material : Cesium.Color.RED.withAlpha(0),
+		outline : true,
+		outlineColor : Cesium.Color.BLACK.withAlpha(0)
+	  }
+	});
+	
+	var jakarta_pusat = viewer.entities.add({
+	  polygon : {
+		hierarchy : Cesium.Cartesian3.fromDegreesArray([
+								  106.818438,-6.184083,
+								  106.818438,-6.169925,
+								  106.837406,-6.169925,
+								  106.837406,-6.184083,
+								  106.818438,-6.184083]),
+		height : 0,
+		material : Cesium.Color.RED.withAlpha(0),
+		outline : true,
+		outlineColor : Cesium.Color.BLACK.withAlpha(0)
+	  }
+	});
+	var jakarta_selatan = viewer.entities.add({
+	  polygon : {
+		hierarchy : Cesium.Cartesian3.fromDegreesArray([
+								  106.825974,-6.268585,
+								  106.825974,-6.233111,
+								  106.888973,-6.233111,
+								  106.888973,-6.268585,
+								  106.825974,-6.268585]),
+		height : 0,
+		material : Cesium.Color.RED.withAlpha(0),
+		outline : true,
+		outlineColor : Cesium.Color.BLACK.withAlpha(0)
+	  }
+	});
+	
+	var jakarta_utara = viewer.entities.add({
+	  polygon : {
+		hierarchy : Cesium.Cartesian3.fromDegreesArray([
+								  106.798611,-6.168329,
+								  106.798611,-6.126537,
+								  106.862469,-6.126537,
+								  106.862469,-6.168329,
+								  106.798611,-6.168329]),
+		height : 0,
+		material : Cesium.Color.RED.withAlpha(0),
+		outline : true,
+		outlineColor : Cesium.Color.BLACK.withAlpha(0)
+	  }
+	});
+	
+	var jakarta_timur = viewer.entities.add({
+	  polygon : {
+		hierarchy : Cesium.Cartesian3.fromDegreesArray([
+								  106.843895,-6.210756,
+								  106.843895,-6.153615,
+								  106.933674,-6.153615,
+								  106.933674,-6.210756,
+								  106.843895,-6.210756]),
+		height : 0,
+		material : Cesium.Color.RED.withAlpha(0),
+		outline : true,
+		outlineColor : Cesium.Color.BLACK.withAlpha(0)
+	  }
+	});
+	*/
+	//function dateConverter(UNIX_timestamp){
+	//	  return new Date(UNIX_timestamp).toISOString();
+	//}
+	
+	//console.log(dateConverter(1597881600100));
+	
+	$( document ).ready(function() {
+		$("#management").append('<p>Layer Management</p>');
+		$("#management").append('<div id="buildings"><p><u>Buildings</u></p><div id="buildings_layer">No Layer</div></div>');
+		$("#management").append('<div id="spatialplans"><p><u>Spatial Plan</u></p><div id="spatialplans_layer">No Layer</div></div>');
+		
+		//document.getElementsByClassName("tablink")[0].click();
+		$('.tablink:first-child').trigger("click");
+		//console.log($('.tablink:first-child').trigger("click"));
+		
+		//load_jakarta();
+		//load_bandung();
+		$('#area_id').on('change', function() {
+			
+			//if($("#area_id").val() != ""){
+			viewer.flyTo(entities[this.value]);
+			load_spatial_plan(this.value);
+			load_building(this.value);
+			//}
+			/*
+			switch(this.value) {
+			  case '1':
+				viewer.flyTo(bandung);
+				load_bandung_building();
+				break;
+			  case '2':
+				viewer.flyTo(jakarta_barat);
+				break;
+			  case '3':
+				viewer.flyTo(jakarta_pusat);
+				break;
+			  case '4':
+				viewer.flyTo(jakarta_selatan);
+				break;
+			  case '5':
+				viewer.flyTo(jakarta_timur);
+				break;
+			  case '6':
+				viewer.flyTo(jakarta_utara);
+				break;
+			  //default:
+				// code block
+			}
+			*/
+		  
+		});
+		
+	
+	});
+
+	//viewer.zoomTo(wyoming);
+	
+	//var scene = viewer.scene;
+	kml1 = "data/export/kml/yusa.tuberlin_3DBuildingSchemaLOD2_itb_labtek_geometry.kml";
+	
+	list = [[kml1], [],[],[],[],[]];
+	
+	function load_building(index){
+		
+
+		var kmlOptions = {
+			camera : viewer.scene.camera,
+			canvas : viewer.scene.canvas,
+			clampToGround : true
+		};
+		
+		// load dinamis??
+		
+		$("#buildings_layer").html('');
+		$("#buildings_layer").append('<div id="layer2">Layer Building.. loading</p>');
+		list_kota = list[index];
+		for (i=0; i < list_kota.length; i++){
+			//console.log(list_kota[i]);
+			var geocachePromise = Cesium.KmlDataSource.load("{{ url_for('static', filename='1')}}".replace(1,list_kota[i]), kmlOptions);
+			
+			geocachePromise.then(function(dataSource) {
+				viewer.dataSources.add(dataSource);
+				$("#layer2").html('<div class="w3-row"><div class="w3-col l2"><label class="switch"><input id="layerB" type="checkbox" checked><span class="slider round"></span></label></div><div class="w3-col l8"><span>Buildings</span></div><div class="w3-col l2"><button type="button" class="w3-button w3-small" id="zoom0" style="padding-top:0px"><i class="fa fa-search"></i></button></div></div>');
+				$('#layerB').on('click', function() {
+					if($(this).is(":checked")){
+						viewer.dataSources._dataSources[0].show = true;
+					}else{
+						viewer.dataSources._dataSources[0].show = false;
+					}
+				});
+				
+				$('#zoom0').on('click', function() {
+					viewer.flyTo(dataSource);
+				});
+				//console.log("load building " + i);
+			});
+		}
+		
+	}
+	
+	/*
+	function load_bandung_building(){
+		
+
+		var kmlOptions = {
+			camera : viewer.scene.camera,
+			canvas : viewer.scene.canvas,
+			clampToGround : true
+		};
+		
+		// load dinamis??
+		
+		$("#buildings_layer").html('');
+		$("#buildings_layer").append('<div id="layer2">Layer 2 .. loading</p>');
+	
+		var geocachePromise = Cesium.KmlDataSource.load("{{ url_for('static', filename='data/export/kml/yusa.tuberlin_3DBuildingSchemaLOD2_itb_geologi_geometry.kml') }}", kmlOptions);
+		
+		geocachePromise.then(function(dataSource) {
+			viewer.dataSources.add(dataSource);
+			$("#layer2").html('<div class="w3-row"><div class="w3-col l2"><label class="switch"><input id="layerB" type="checkbox" checked><span class="slider round"></span></label></div><div class="w3-col l8"><span>ITB</span></div><div class="w3-col l2"><button type="button" class="w3-button w3-small" id="zoom0" style="padding-top:0px"><i class="fa fa-search"></i></button></div></div>');
+			$('#layerB').on('click', function() {
+				if($(this).is(":checked")){
+					viewer.dataSources._dataSources[0].show = true;
+				}else{
+					viewer.dataSources._dataSources[0].show = false;
+				}
+			});
+			
+			$('#zoom0').on('click', function() {
+				viewer.flyTo(dataSource);
+			});
+			console.log("load bbox_itb");
+		});
+		
+		
+	}
+	*/
+	function load_spatial_plan(index){
+		$("#spatialplans_layer").html("");
+		$("#spatialplans_layer").append('<div id="lyr1">Layer Spatial Plan.. loading</p>');
+		//console.log(spatial_plan[index]);
+		var tileset = viewer.scene.primitives.add(new Cesium.Cesium3DTileset({
+			url : "{{ url_for('static', filename='1') }}".replace(1,spatial_plan[index])
+		}));
+		
+		$("#lyr1").html('<div class="w3-row"><div class="w3-col l2"><label class="switch"><input id="layerC" type="checkbox" checked><span class="slider round"></span></label></div><div class="w3-col l8"><span>'+kota[index]+'</span></div><div class="w3-col l2"></div></div>');
+		$('#layerC').on('click', function() {
+			if($(this).is(":checked")){
+				tileset.show = true;				
+			}else{
+				tileset.show = false;
+			}
+		});
+	
+		function colorByLUType() {
+			tileset.style = new Cesium.Cesium3DTileStyle({
+				color : {
+					conditions : 
+					 template[index]
+				}
+			});
+		}
+		
+		colorByLUType();
+	}
+	/*
+	function load_bandung(){
+		$("#spatialplans_layer").append('<div id="lyr1">Layer 1 .. loading</p>');
+		var tileset = viewer.scene.primitives.add(new Cesium.Cesium3DTileset({
+			url : "{{ url_for('static', filename='data/spatplan/bandung/spatplan2d/GenericCityObject/tileset.json') }}"
+		}));
+		
+		$("#lyr1").html('<div class="w3-row"><div class="w3-col l2"><label class="switch"><input id="layerC" type="checkbox" checked><span class="slider round"></span></label></div><div class="w3-col l8"><span>Bandung</span></div><div class="w3-col l2"></div></div>');
+		$('#layerC').on('click', function() {
+			if($(this).is(":checked")){
+				tileset.show = true;				
+			}else{
+				tileset.show = false;
+			}
+		});
+	
+		function colorByLUType() {
+			tileset.style = new Cesium.Cesium3DTileStyle({
+				color : {
+					conditions : [
+					  ["${lutype} === 'administration office'", "rgba(255, 175, 125, 1.0)"],
+					  ["${lutype} === 'education'", "rgba(240, 175, 125, 1.0)"],
+					  ["${lutype} === 'electric substation'", "rgba(230, 175, 125, 1.0)"],
+					  ["${lutype} === 'high voltage area'", "rgba(230, 175, 125, 1.0)"],
+					  ["${lutype} === 'wastewater treatment'", "rgba(175, 175, 230, 1.0)"],
+					  ["${lutype} === 'socio cultur'", "rgba(175, 230, 125, 1.0)"],
+					  ["${lutype} === 'health services'", "rgba(175, 175, 125, 1.0)"],
+					  ["${lutype} === 'sport'", "rgba(175, 175, 125, 1.0)"],
+					  ["${lutype} === 'power plant'", "rgba(230, 175, 125, 1.0)"],
+					  ["${lutype} === 'religious'","rgba(175, 175, 125, 1.0)"],
+					  
+					  
+					  ["${lutype} === 'natural conservation'", "rgba(100, 255, 100, 1.0)"],
+					  ["${lutype} === 'natural preservation'", "rgba(100, 255, 100, 1.0)"],
+					  ["${lutype} === 'open green privat'", "rgba(125, 255, 100, 1.0)"],
+					  ["${lutype} === 'open green public'", "rgba(125, 255, 100, 1.0)"],
+					  ["${lutype} === 'open public space'", "rgba(125, 255, 100, 1.0)"],
+					  ["${lutype} === 'urban forest'", "rgba(100, 255, 100, 1.0)"],
+					  
+					  ["${lutype} === 'pond'", "rgba(175, 175, 255, 1.0)"],
+					  ["${lutype} === 'lake'", "rgba(175, 175, 255, 1.0)"],
+									
+					  ["${lutype} === 'agriculture'", "rgba(255, 175, 175, 1.0)"],
+					  ["${lutype} === 'cemetery'", "rgba(255, 175, 175, 1.0)"],
+					  ["${lutype} === 'airfield area'", "rgba(255, 175, 175, 1.0)"],
+					  ["${lutype} === 'toll road area'", "rgba(255, 175, 175, 1.0)"],
+					  ["${lutype} === 'rail area'", "rgba(255, 175, 175, 1.0)"],
+					  ["${lutype} === 'recreation'","rgba(255, 175, 175, 1.0)"],
+					  ["${lutype} === 'road area'","rgba(255, 175, 175, 1.0)"],
+					  
+					  ["${lutype} === 'river area'", "rgba(100, 100, 175, 1.0)"],
+					  
+					  ["${lutype} === 'road'", "rgba(50, 50, 50, 1.0)"],  
+					  ["${lutype} === 'transportation'", "rgba(100, 100, 100, 1.0)"], 
+					  
+					  ["${lutype} === 'mixed - high intensity'", "rgba(255, 230, 51, 1.0)"], 
+					  ["${lutype} === 'mixed - medium intensity'","rgba(255, 210, 51, 1.0)"], 
+					  ["${lutype} === 'industry and commercial'", "rgba(255, 255, 51, 1.0)"], 
+					  ["${lutype} === 'commercial and linier services'","rgba(255, 185, 51, 1.0)"],
+					  ["${lutype} === 'commercial centre and services'","rgba(255, 145, 51, 1.0)"],
+					  ["${lutype} === 'traditional market'", "rgba(255, 150, 51, 1.0)"],
+					  
+					  ["${lutype} === 'residential - high density'", "rgba(200, 100, 51, 1.0)"],
+					  ["${lutype} === 'residential - low density'", "rgba(200, 175, 51, 1.0)"],
+					  ["${lutype} === 'residential - medium density'", "rgba(200, 150, 51, 1.0)"],
+					  
+						['true', 'color("blue")']
+					]
+				}
+			});
+		}
+		
+		colorByLUType();
+	
+	}
+	
+	function load_jakarta(){
+		
+		$("#spatialplans_layer").append('<div id="lyr_jkt">loading..</p>');
+		var tileset2 = viewer.scene.primitives.add(new Cesium.Cesium3DTileset({
+			url : "{{ url_for('static', filename='data/spatplan/jakarta/spatplan2d_0/GenericCityObject/tileset.json') }}"
+		}));
+		
+		$("#lyr_jkt").html('<div class="w3-row"><div class="w3-col l2"><label class="switch"><input id="layerJ" type="checkbox" checked><span class="slider round"></span></label></div><div class="w3-col l8"><span>Jakarta</span></div><div class="w3-col l2"></div></div>');
+		$('#layerJ').on('click', function() {
+			if($(this).is(":checked")){
+				tileset2.show = true;				
+			}else{
+				tileset2.show = false;
+			}
+		});
+		
+		/// Coloring spatial planning by type of Land Use.
+		function colorByLUTypeJakarta() {
+			tileset2.style = new Cesium.Cesium3DTileStyle({
+				color : {
+					conditions : [
+					  ["${lutype} === 'Residential - low density'", "rgba(200, 175, 51, 1.0)"],
+					  ["${lutype} === 'Residential - vertical low density'", "rgba(225, 150, 51, 1.0)"],
+					  ["${lutype} === 'Residential - vertical'", "rgba(175, 150, 51, 1.0)"],
+					  ["${lutype} === 'Residential - vertical medium density'", "rgba(200, 150, 51, 1.0)"], 
+					  ["${lutype} === 'Residential - kampoong'", "rgba(200, 100, 51, 1.0)"],
+					  
+					  ["${lutype} === 'Industry'", "rgba(255, 255, 51, 1.0)"],
+					  ["${lutype} === 'Industry and warehouse'","rgba(255, 185, 51, 1.0)"],
+					  ["${lutype} === 'Mixed'","rgba(255, 145, 51, 1.0)"],
+					  
+					  ["${lutype} === 'Business, commercials and services - Low density'","rgba(255, 210, 51, 1.0)"], 
+					  ["${lutype} === 'Business, commercials and services'", "rgba(255, 230, 51, 1.0)"], 
+					  
+					  ["${lutype} === 'Reclamation zone'", "rgba(100, 175, 175, 1.0)"],     
+					  ["${lutype} === 'Open space blue'", "rgba(100, 100, 175, 1.0)"],
+					  
+					  ["${lutype} === 'Cemetery'", "rgba(255, 175, 175, 1.0)"],
+					  ["${lutype} === 'Urban forest'", "rgba(100, 255, 100, 1.0)"],
+					  ["${lutype} === 'Park'", "rgba(100, 255, 100, 1.0)"],
+					  ["${lutype} === 'Green and Recreation'", "rgba(125, 255, 100, 1.0)"],
+					  ["${lutype} === 'Green corridor'", "rgba(125, 255, 100, 1.0)"],
+					  ["${lutype} === 'Protection zone'", "rgba(125, 255, 100, 1.0)"],
+					  
+					  ["${lutype} === 'Government - local'","rgba(175, 175, 125, 1.0)"],
+					  ["${lutype} === 'Government -  national'","rgba(175, 175, 125, 1.0)"],
+					  ["${lutype} === 'Diplomatic zone'", "rgba(230, 175, 125, 1.0)"],
+					  ["${lutype} === 'Public and social services'", "rgba(175, 175, 125, 1.0)"],
+					  
+					  ['true', 'color("blue")']
+					]
+				}
+			});
+		}
+		colorByLUTypeJakarta();
+	}
+	*/
+  </script>
+{% endblock %}

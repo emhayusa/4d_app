@@ -1,0 +1,61 @@
+{% extends 'main.html' %}
+{% block header %}
+  {% block title %}Forgot Password{% endblock %}
+{% endblock %}
+
+{% block content %}
+<div class="main-agileinfo">
+  <div class="agileits-top">
+    <form id="target">
+        <input class="text email" type="email" id="email" name="email" placeholder="Email" required="">
+        <div id="result"></div>
+        <input type="submit" value="SEND">
+    </form>
+    <p>Don't have an account? <a href="{{ url_for('registration.register') }}"> Register Now!</a></p>
+    <p>Have already an account? <a href="{{ url_login }}"> Login Now!</a></p>
+  </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.4.1.js"></script>
+
+<script>
+function forgot(){
+  $.ajax({
+    url: '{{ url_api }}user/forgot/',
+    type: 'POST',
+    data: JSON.stringify({
+       "email": $("#email").val(),
+    }),
+    /*
+    headers: {
+      "Authorization": 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1NzgwNDA0MDMsImlhdCI6MTU3Nzk1Mzk5OCwic3ViIjoyfQ.aOcc8AoywBLEslHjTpUO1RD5bPXFLmcIzpMLq5HpgCI'  
+    },
+    */
+    //dataType: 'json',
+    contentType: 'application/json',
+    complete: function(response) {
+       console.log(response);
+     
+        // $( "#target" ).fadeIn(slow);
+        //obj = $.parseJSON(data.responseJSON);
+        //console.log(obj);
+        $( "#result" ).html('');
+        $( "#result" ).append('<p>Http Code: ' + response.status + '(' + response.statusText +')</p>');
+        $( "#result" ).append('<p>Status: ' + response.responseJSON.status + '</p>');
+        $( "#result" ).append('<p>Message: ' + response.responseJSON.message + '</p>');
+        //console.log(data.responseJSON.status);
+      
+    }
+  });
+
+}
+$( document ).ready(function() {
+  $( "#target" ).submit(function( event ) {
+    //alert( "Handler for .submit() called." );
+    console.log('clicked {{ url_api }}' );
+    forgot();
+    event.preventDefault();
+  });
+});
+</script>
+{% endblock %}

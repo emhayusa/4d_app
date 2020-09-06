@@ -1,0 +1,129 @@
+{% extends 'main.html' %}
+
+{% block content %}
+
+
+<div class="w3-row-padding" style="padding-top:20px; min-height:480px;">
+	<div class="w3-container w3-padding-32" id="login">
+		<h3 class="w3-border-bottom w3-border-light-grey w3-padding-16">Review 3D Building (CityGml)</h3>
+    </div>
+	<div class="w3-col">
+				<div class="w3-row-padding">
+					<div class="w3-col l2 m2">
+					  <p>Contributor</p>
+					</div>
+					<div class="w3-col l6 m6">
+					  <p id="contributor">contributor</p>
+					</div>
+				</div>
+				<div class="w3-row-padding">
+					<div class="w3-col l2 m2">
+					  <p>Area</p>
+					</div>
+					<div class="w3-col l2 m2">
+					  <p id="area">Area</p>
+					</div>
+				</div>
+				<div class="w3-row-padding">
+					<div class="w3-col l2 m2">
+					  <p>City GML file</p>
+					</div>
+					<div class="w3-col l6 m6">
+					  <p id="city_gml_file">City GML file</p>
+					</div>
+				</div>
+				<div class="w3-row-padding">
+					<div class="w3-col l2 m2">
+					  <p>Uploaded on</p>
+					</div>
+					<div class="w3-col l6 m6">
+					  <p id="uploaded_on">Uploaded on</p>
+					</div>
+				</div>
+			
+			<div class="l6">
+			<p> <a href="{{ url_for('home.validator') }}" class="w3-bar-item w3-button w3-green">< Back to Validator page</a></p>
+				
+				{% with messages = get_flashed_messages() %}
+				{% if messages %}
+					<ul class="flashes">
+						{% for message in messages %}
+						<div class="message_flash"><p class="w3-text-red">{{ message }}</p></div>
+						{% endfor %}
+					</ul>
+				{% endif %}
+				{% endwith %}
+				<div id="konten" style="display:none;">
+					<h3>Actions</h3>
+					<form action="" method="post">
+						{{ form.hidden_tag() }}
+						<p>
+							{{ form.respons.label }} <br />
+							{{ form.respons }} <br/>
+							{% for error in form.respons.errors %}
+							<span style="color: red;">[{{ error }}</span>
+							{% endfor %}
+						</p>
+						<p>
+							{{ form.reason.label }} <br />
+							{{ form.reason }} <br/>
+							{% for error in form.reason.errors %}
+							<span style="color: red;">[{{ error }}</span>
+							{% endfor %}
+						</p>
+						
+						<p> {{ form.submit() }}</p>
+						
+					</form>
+				</div>
+			</div>
+	</div>
+</div>
+
+<script>
+function load_gml(){
+    $.ajax({
+      url: '{{ url_api }}city_gml/id/{{id}}',
+      type: 'GET',
+      
+      headers: {
+        "Authorization":'{{session["Authorization"]}}' 
+      },
+      
+      //dataType: 'json',
+      contentType: 'application/json',
+      complete: function(response) {
+        //console.log(response);
+		data = response.responseJSON;
+		console.log(response.responseJSON);
+		$('#contributor').html(data.contributor);
+		$('#area').html(data.area.area_name);
+		$('#city_gml_file').html(data.city_gml_file);
+		
+		uploaded= data.uploaded_on.replace("T"," ").substr(0, 19);//dateConverter(v.uploaded_on);
+		$('#uploaded_on').html(uploaded);
+		console.log(data.status.status_name);
+		if(data.status.id == 1){
+			$("#konten").show();
+			$('#filename').val(data.city_gml_file);
+			$('#city_gml_id').val(data.id);
+			console.log(document.getElementById("filename"));
+		}
+      }
+    });
+}
+$( document ).ready(function() {
+	//console.log(document.cookie);
+	//checkCookie();
+	
+	console.log('{{session["username"]}}');
+	console.log('{{session["public_id"]}}');
+	console.log('{{session["Authorization"]}}');
+	//console.log(getCookie("Authorization"));
+	//load_user();
+	//$("#konten").hide();
+	load_gml();
+	
+});
+</script>
+{% endblock %}

@@ -1,0 +1,906 @@
+{% extends 'main.html' %}
+
+
+{% block content %}
+  <!-- About Map -->
+  <div class="w3-row" id="map" style="padding-top:52px">
+	<div id="select_area" style="background:white;width:300px;height:110px;position:absolute;top:80px;left:30px; z-index:999; padding:20px">
+		<label>Area of interest</label>
+		<select id="area_id" name="area_id" class="w3-select">
+			<option disabled="" selected="selected">Choose Area</option>
+			<option value="1" >Jakarta Utara</option>
+			<option value="2" >Jakarta Timur</option>
+			<option value="3" >Bandung</option>
+		</select>
+	</div>
+	<div id="management" style="background:white;width:300px;min-height:140px;position:absolute;top:200px;left:30px; z-index:999; padding:0px 20px 20px 20px;">
+		
+	</div>
+	{% if 'username' in session %}
+			{% if session["type_id"] == 2 %}
+				<div id="uploader" style="background:white;width:300px;height:80px;position:absolute;top:350px;left:30px; z-index:999; padding:20px">
+					<a href="{{ url_for('home.upload_gml') }}" class="w3-bar-item w3-button w3-blue">Upload 3d building (CityGml)</a>
+				</div>
+			{% endif %}
+	{% endif %}
+	<div id="cesiumContainer" style="width:100%; height:700px"></div>
+	
+  </div>
+	
+<!-- <script src=".{{ url_for('static', filename='js/CitydbKmlLayer.js') }}"></script> -->
+<script>
+	
+
+
+	var sumur;
+	//var viewer = new Cesium.Viewer('cesiumContainer');
+	
+	/*var viewer = new Cesium.Viewer("cesiumContainer", {
+	  terrainProvider: Cesium.createWorldTerrain(),
+	  imageryProvider: new Cesium.ArcGisMapServerImageryProvider({
+		url:
+		  "https://services.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer",
+	  }),
+	  baseLayerPicker: true,
+	  infoBox: true,
+	});
+	*/
+	var imageryProviders = Cesium.createDefaultImageryProviderViewModels();
+	var selectedImageryProviderIndex = 2;  // MapBox Street is 5th in the list.
+	// Create a clock that loops on Christmas day 2013 and runs in real-time.
+	var clock = new Cesium.Clock({
+	   startTime : Cesium.JulianDate.fromIso8601("2016-09-01"),
+	   currentTime : Cesium.JulianDate.fromIso8601("2016-09-01T03.0000Z"),
+	   stopTime : Cesium.JulianDate.fromIso8601("2016-09-30"),
+	   clockRange : Cesium.ClockRange.LOOP_STOP,
+	   clockStep : Cesium.ClockStep.SYSTEM_CLOCK_MULTIPLIER
+	});
+
+	var extent = Cesium.Rectangle.fromDegrees(95,-11,141,6);
+
+	Cesium.Camera.DEFAULT_VIEW_RECTANGLE = extent;
+	Cesium.Camera.DEFAULT_VIEW_FACTOR = 1;
+
+
+	var viewer = new Cesium.Viewer('cesiumContainer', {
+		clockViewModel: new Cesium.ClockViewModel(clock),
+		imageryProviderViewModels: imageryProviders,
+		selectedImageryProviderViewModel: imageryProviders[selectedImageryProviderIndex]
+	});
+	
+	//viewer.infoBox.frame.sandbox = "allow-same-origin allow-top-navigation allow-pointer-lock allow-popups allow-forms allow-scripts";
+	console.log(viewer.infoBox.frame.sandbox);
+
+	
+    Cesium.knockout.getObservable(viewer, '_selectedEntity').subscribe(function(entity) {
+        if (!Cesium.defined(entity)) {
+            console.log('De-selected entity.');
+        } else {
+            console.log('Selected entity ' + (entity.name || entity.id));
+			entity.description = (entity.name || entity.id) + "<br /> <button class='w3-button w3-blue' id='save'>Save</button></td>";
+			load_area();
+        }
+    });
+	/*
+	// Information about the currently selected feature
+	var selected = {
+	  feature: undefined,
+	  originalColor: new Cesium.Color(),
+	};
+
+	// An entity object which will hold info about the currently selected feature for infobox display
+	var selectedEntity = new Cesium.Entity();
+
+	// Get default left click handler for when a feature is not picked on left click
+	var clickHandler = viewer.screenSpaceEventHandler.getInputAction(
+	  Cesium.ScreenSpaceEventType.LEFT_CLICK
+	);
+	*/
+	viewer.infoBox.frame.addEventListener('load', function() {
+				//
+				// Now that the description is loaded, register a click listener inside
+				// the document of the iframe.
+				//
+				console.log('yyyyyy');
+				
+				viewer.infoBox.frame.contentDocument.body.addEventListener('click', function(e) {
+					//
+					// The document body will be rewritten when the selectedEntity changes,
+					// but this body listener will survive.  Now it must determine if it was
+					// one of the clickable buttons.
+					//
+					//console.log(e);
+					//console.log(e.target);
+					//console.log('xxxx');
+					
+					if (e.target && e.target.id === 'save') {
+						//++numClicks;
+						//updateDisplay();
+						//console.log('aaa');
+						//name = $(".cesium-infoBox-description");
+						//$(".cesium-infoBox-description").hide();
+						//console.log(viewer.selectedEntity);
+						entity = viewer.selectedEntity;
+						entity.description = "BADALA";
+						//console.log(name);
+						//console.log(name);
+					}
+				}, false);
+			}, false);
+	
+	var jakarta_utara = viewer.entities.add({
+	  polygon : {
+		hierarchy : Cesium.Cartesian3.fromDegreesArray([
+								  106.798611,-6.168329,
+								  106.798611,-6.126537,
+								  106.862469,-6.126537,
+								  106.862469,-6.168329,
+								  106.798611,-6.168329]),
+		height : 0,
+		material : Cesium.Color.RED.withAlpha(0),
+		outline : true,
+		outlineColor : Cesium.Color.BLACK.withAlpha(0)
+	  }
+	});
+	
+	var jakarta_timur = viewer.entities.add({
+	  polygon : {
+		hierarchy : Cesium.Cartesian3.fromDegreesArray([
+								  106.843895,-6.210756,
+								  106.843895,-6.153615,
+								  106.933674,-6.153615,
+								  106.933674,-6.210756,
+								  106.843895,-6.210756]),
+		height : 0,
+		material : Cesium.Color.RED.withAlpha(0),
+		outline : true,
+		outlineColor : Cesium.Color.BLACK.withAlpha(0)
+	  }
+	});
+	
+	var bandung = viewer.entities.add({
+	  polygon : {
+		hierarchy : Cesium.Cartesian3.fromDegreesArray([
+								  107.594261,-6.904013,
+								  107.594261,-6.882041,
+								  107.626705,-6.882041,
+								  107.626705,-6.904013,
+								  107.594261,-6.904013]),
+		height : 0,
+		material : Cesium.Color.RED.withAlpha(0),
+		outline : true,
+		outlineColor : Cesium.Color.BLACK.withAlpha(0)
+	  }
+	});
+	
+	function load_area(){
+		$.ajax({
+		  url: '{{ url_api }}status/',
+		  type: 'GET',
+		  /*
+		  headers: {
+			"Authorization": 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1NzgwNDA0MDMsImlhdCI6MTU3Nzk1Mzk5OCwic3ViIjoyfQ.aOcc8AoywBLEslHjTpUO1RD5bPXFLmcIzpMLq5HpgCI'  
+		  },
+		  */
+		  //dataType: 'json',
+		  contentType: 'application/json',
+		  complete: function(response) {
+			console.log(response);
+			//$.each(response.responseJSON.data, function(i, v) {
+				  //console.log(i + " " + v.id + ' ' + v.name);
+				//$('#area_id').append('<option value="'+v.id+'">'+v.area_name+'</option>');
+				//console.log(v.id + " " + v.name);
+			//});
+		  }
+		});
+
+	}
+	
+	$( document ).ready(function() {
+		$("#management").append('<p>Layer Management</p>');
+		$("#management").append('<div id="buildings"><p><u>Buildings</u></p><div id="buildings_layer">No Layer</div></div>');
+		$("#management").append('<div id="spatialplans"><p><u>Spatial Plan</u></p><div id="spatialplans_layer"></div></div>');
+	
+		load_jakarta();
+		load_bandung();
+		$('#area_id').on('change', function() {
+			//alert( this.value );
+			//console.log(this.value);
+			switch(this.value) {
+			  case '1':
+				// code block
+				//alert(this.value);
+				//console.log('a');
+				viewer.flyTo(jakarta_utara);
+				break;
+			  case '2':
+				// code block
+				viewer.flyTo(jakarta_timur);
+				break;
+			  case '3':
+				// code block
+				viewer.flyTo(bandung);
+				load_bandung_building();
+				break;
+			  //default:
+			  
+				// code block
+			}
+		  
+		  
+		});
+	
+	});
+
+	//viewer.zoomTo(wyoming);
+	
+	//var scene = viewer.scene;
+	
+	function load_bandung_building(){
+		
+
+		var kmlOptions = {
+			camera : viewer.scene.camera,
+			canvas : viewer.scene.canvas,
+			clampToGround : true
+		};
+		// Load geocache points of interest from a KML file
+		// Data from : http://catalog.opendata.city/dataset/pediacities-nyc-neighborhoods/resource/91778048-3c58-449c-a3f9-365ed203e914
+		//var geocachePromise = Cesium.KmlDataSource.load("{{ url_for('static', filename='data/export/kml/bbox.kml') }}", kmlOptions);
+		//var geocachePromise = Cesium.KmlDataSource.load("{{ url_for('static', filename='data/export/kml/muhammad.hasannudin_3dbldglod2_itb_labtek.kml') }}", kmlOptions);
+		//var geocachePromise = Cesium.KmlDataSource.load("{{ url_for('static', filename='data/export/kml/yusa.tuberlin_3DBuildingSchemaLOD2_itb_sabuga.kml') }}", kmlOptions);
+		//var geocachePromise = Cesium.KmlDataSource.load("{{ url_for('static', filename='data/export/kml/muhammad.hasannudin_3dbldglod2_itb_octagon.kml') }}", kmlOptions);
+		//var geocachePromise = Cesium.KmlDataSource.load("{{ url_for('static', filename='data/export/kml/gui/sabuga.kml') }}", kmlOptions);
+		//var geocachePromise = Cesium.KmlDataSource.load("{{ url_for('static', filename='data/export/kml/yusa.tuberlin_3DBuildingSchemaLOD2_itb_sabuga.kml') }}", kmlOptions);
+		//sumur = Cesium.KmlDataSource.load("{{ url_for('static', filename='data/export/kml/Tiles/0/0/yusa.tuberlin_3DBuildingSchemaLOD2_sumurbandung_2_Tile_0_0_geometry.kml') }}", kmlOptions);
+		//sumur = Cesium.KmlDataSource.load("{{ url_for('static', filename='data/export/kml/sumurbandung_1tiles/yusa.tuberlin_3DBuildingSchemaLOD2_sumurbandung_2.kml') }}", kmlOptions);
+		//sumur = Cesium.KmlDataSource.load("{{ url_for('static', filename='data/export/kml/bbox/bbox.kml') }}", kmlOptions);
+		//var geocachePromise = Cesium.KmlDataSource.load("{{ url_for('static', filename='data/export/kml/yusa.tuberlin_3DBuildingSchemaLOD2_sumurbandung_2.kml') }}", kmlOptions);
+		
+		$("#buildings_layer").html('');
+		$("#buildings_layer").append('<div id="layer2">Layer 2 .. loading</p>');
+		/*
+		$("#buildings_layer").append('<div id="layer1">Layer 1 .. loading</p>');
+		sumur.then(function(dataSource) {
+			// Add the new data as entities to the viewer
+			//viewer.flyTo(dataSource.entities);
+			
+			$("#layer1").html('<div><label class="switch"><input id="layerA" type="checkbox" checked><span class="slider round"></span></label> <span>Sumur</span></div>');
+			//$("#management").append('<div><label class="switch"><input id="layerB" type="checkbox"><span class="slider round"></span></label> <span>Layer B</span></div>');
+			$('#layerA').on('click', function() {
+				if($(this).is(":checked")){
+				//alert('checked'); 
+				//	console.log(viewer.dataSources.length);
+				//console.log(viewer.dataSources._dataSources[length-1]);
+				//console.log(viewer.dataSources._dataSources[length-1].show);
+				//._dataSources[i].show =  true
+					viewer.dataSources._dataSources[0].show = true;
+				}else{
+					viewer.dataSources._dataSources[0].show = false;
+				//alert('unchecked'); 
+				}
+			});
+			viewer.dataSources.add(dataSource);
+			//var geocacheEntities = dataSource.entities.values;
+			//console.log(geocacheEntities.length);
+			/*for (var i = 0; i < geocacheEntities.length; i++) {
+				var entity = geocacheEntities[i];
+				if (i == 1){
+					console.log(entity);
+				}
+				//console.log(i);
+				//console.log(entity);
+				//if (i == 0){
+					//console.log(entity._id);
+					//console.log(entity.id);
+					//console.log(Cesium.defined(entity.id));
+					//console.log(Cesium.defined(entity.location));
+				//}
+				//if(entity._id === "4ae97d49-94d9-4d3b-b1b0-badd5b5c648a"){
+					//console.log(entity);
+				//}
+				if (Cesium.defined(entity.id)) {
+					//console.log(entity.id);
+					//if (entity.id === 'dc5c71cb-c180-45d2-82cd-9b250a1cf864KMLGeom_bldg00-370b3d19ad-c699-4c92-8467-a37e0b159819'){
+					//	console.log(entity.id);
+					//}
+					 //if(entity.name === "bldg00-36"){
+						//NAME = "Gedung ";
+						//HEIGHT = "2";
+						//REMARK = "ITB";
+					 //}else if (entity.name == "bldg00-37"){
+						NAME = "Gedung " + Math.random().toString(36).replace(/[^a-z]+/g, '');
+						HEIGHT =  Math.floor(Math.random() * Math.floor(5));
+						REMARK = "ITB";
+					 //}
+					 {% if 'username' in session %}
+						{% if session["type_id"] < 3 %}
+							var description = '<table class="cesium-infoBox-defaultTable cesium-infoBox-defaultTable-lighter"><tbody>' +
+								 '<tr><td>' + "Id" + '</td><td>' + entity.name + '</td></tr>' +
+								 '<tr><td>' + "Name" + '</td><td><input class="w3-input w3-border" id="username" name="username" type="text" value="'+ NAME +'"></td></tr>' +
+								 '<tr><td>' + "Height" + '</td><td><input class="w3-input w3-border" id="username" name="username" type="text" value="'+ HEIGHT +'"> m</td></td></tr>' +
+								 '<tr><td>' + "Remark" + '</td><td><input class="w3-input w3-border" id="username" name="username" type="text" value="'+ REMARK +'"></td></td></tr>' +
+								 '<tr><td>' + "Photo" + '</td><td><input type="file" id="myfile" name="myfile"></td></tr>' +
+								 '<tr><td>' + "Video" + '</td><td><input type="file" id="myfile" name="myfile"></td></tr>' +
+								 '<tr><td></td><td><button class="w3-button w3-blue">Save</button></td></tr>' +
+								 '</tbody></table>';
+							 entity.description = description;
+						{% else %}
+							var description = '<table class="cesium-infoBox-defaultTable cesium-infoBox-defaultTable-lighter"><tbody>' +
+								 '<tr><td>' + "Id" + '</td><td>' + entity.name + '</td></tr>' +
+								 '<tr><td>' + "Name" + '</td><td> '+ NAME +'</td></tr>' +
+								 '<tr><td>' + "Height" + '</td><td>'+ HEIGHT +' m</td></tr>' +
+								 '<tr><td>' + "Remark" + '</td><td>'+ REMARK +' </td></tr>' +
+								 '<tr><td>' + "Photo" + '</td><td></td></tr>' +
+								 '<tr><td>' + "Video" + '</td><td></td></tr>' +
+								 '</tbody></table>';
+							 entity.description = description;
+						{% endif %}
+					{% else %}
+							var description = '<table class="cesium-infoBox-defaultTable cesium-infoBox-defaultTable-lighter"><tbody>' +
+								 '<tr><td>' + "Id" + '</td><td>' + entity.name + '</td></tr>' +
+								 '<tr><td>' + "Name" + '</td><td>Gedung A</td></tr>' +
+								 '<tr><td>' + "Height" + '</td><td>5 m</td></tr>' +
+								 '<tr><td>' + "Remark" + '</td><td>ITB </td></tr>' +
+								 '<tr><td>' + "Photo" + '</td><td></td></tr>' +
+								 '<tr><td>' + "Video" + '</td><td></td></tr>' +
+								 '</tbody></table>';
+							 entity.description = description;
+					{% endif %}
+				}
+				/*if (Cesium.defined(entity.location)) {
+					// Entity styling code here
+					 var cartographicPosition = Cesium.Cartographic.fromCartesian(entity.position.getValue(Cesium.JulianDate.now()));
+					 var latitude = Cesium.Math.toDegrees(cartographicPosition.latitude);
+					 var longitude = Cesium.Math.toDegrees(cartographicPosition.longitude);
+		//             // Modify description
+					 var description = '<table class="cesium-infoBox-defaultTable cesium-infoBox-defaultTable-lighter"><tbody>' +
+						 '<tr><th>' + "Longitude" + '</th><td>' + longitude.toFixed(5) + '</td></tr>' +
+						 '<tr><th>' + "Latitude" + '</th><td>' + latitude.toFixed(5) + '</td></tr>' +
+						 '</tbody></table>';
+					 entity.description = description;
+				}
+				/
+			}
+			/
+			console.log("done");
+		});
+		*/
+		//var geocachePromise = Cesium.KmlDataSource.load("{{ url_for('static', filename='data/export/kml/Tiles/0/1/yusa.tuberlin_3DBuildingSchemaLOD2_sumurbandung_2_Tile_0_1_geometry.kml') }}", kmlOptions);
+		//var geocachePromise = Cesium.KmlDataSource.load("{{ url_for('static', filename='data/export/kml/yusa.tuberlin_3DBuildingSchemaLOD2_sumurbandung_2.kml') }}", kmlOptions);
+		var geocachePromise = Cesium.KmlDataSource.load("{{ url_for('static', filename='data/export/kml/bbox_itb/bbox_itb.kml') }}", kmlOptions);
+		//var geocachePromise = Cesium.KmlDataSource.load("{{ url_for('static', filename='data/export/kml/multisurface/sabuga.kml') }}", kmlOptions);
+		
+		geocachePromise.then(function(dataSource) {
+			// Add the new data as entities to the viewer
+			//viewer.flyTo(dataSource.entities);
+			viewer.dataSources.add(dataSource);
+			$("#layer2").html('<div class="w3-row"><div class="w3-col l2"><label class="switch"><input id="layerB" type="checkbox" checked><span class="slider round"></span></label></div><div class="w3-col l8"><span>ITB</span></div><div class="w3-col l2"><button type="button" class="w3-button w3-small" id="zoom0" style="padding-top:0px"><i class="fa fa-search"></i></button></div></div>');
+			//$("#management").append('<div><label class="switch"><input id="layerB" type="checkbox"><span class="slider round"></span></label> <span>Layer B</span></div>');
+			$('#layerB').on('click', function() {
+				if($(this).is(":checked")){
+				//alert('checked'); 
+				console.log(viewer.dataSources.length);
+				//console.log(viewer.dataSources._dataSources[length-1]);
+				//console.log(viewer.dataSources._dataSources[length-1].show);
+				//._dataSources[i].show =  true
+					viewer.dataSources._dataSources[0].show = true;
+				}else{
+					viewer.dataSources._dataSources[0].show = false;
+				//alert('unchecked'); 
+				}
+			});
+			
+			$('#zoom0').on('click', function() {
+				//console.log('clicked');
+				viewer.flyTo(dataSource);
+			});
+			var geocacheEntities = dataSource.entities.values;
+			//console.log(dataSource.entities);
+			console.log(dataSource.entities.values[1].description);
+			dataSource.entities.values[1].description = "<b>Test</b>";
+			console.log("changed: " + dataSource.entities.values[1].description);
+			console.log(geocacheEntities.length);
+			/*
+			for (var i = 0; i < geocacheEntities.length; i++) {
+					var entity = geocacheEntities[i];
+					//console.log(entity);
+					//console.log(entity.name);
+					
+					if (Cesium.defined(entity.id)) {
+					//if (i == 536 ) {
+						//if(entity.name == "bldg00-36_RoofSurface"){
+						//	console.log("yes");
+						//	console.log(i + " " + entity.name);
+						//	console.log(i + " " + entity.description);
+							//entity.name = "Hello " + i + " " + entity.name;
+							//entity.description = i + " " + entity.id + " " + entity.name;
+							test = entity.name.split("_");
+							//console.log(test[0]);
+							ID = test[0];
+							NAME = ID; //test[0];
+							HEIGHT = "10";
+							REMARK = "test";
+							var description = '<table class="cesium-infoBox-defaultTable cesium-infoBox-defaultTable-lighter"><tbody>' +
+								 '<tr><td>' + "Id" + '</td><td>' + ID + '</td></tr>' +
+								 '<tr><td>' + "Name" + '</td><td><input class="w3-input w3-border" id="name" name="name" type="text" value="'+ NAME +'"></td></tr>' +
+								 '<tr><td>' + "Function" + '</td><td><input class="w3-input w3-border" id="function" name="function" type="text" value="'+ REMARK +'"></td></td></tr>' +
+								 '<tr><td>' + "Height" + '</td><td><input class="w3-input w3-border" id="height" name="height" type="text" value="'+ HEIGHT +'"> m</td></td></tr>' +
+								 '<tr><td>' + "Photo" + '</td><td><input type="file" id="photo" name="video"></td></tr>' +
+								 '<tr><td>' + "Video" + '</td><td><input type="file" id="video" name="video"></td></tr>' +
+								 '<tr><td></td><td><button class="w3-button w3-blue" id="save">Save</button></td></tr>' +
+								 '</tbody></table>';
+							//console.log("description");
+							//console.log(description);
+							//console.log(entity.description);
+							entity.description = description;
+							
+						//}
+					}
+				/*
+				if (i == 1){
+					var entity = geocacheEntities[i];
+					console.log(entity);
+					console.log(entity.name);
+					if (Cesium.defined(entity.id)) {
+					
+						console.log("yes");
+						console.log(entity.id);
+						entity.name = "Hello Name";
+						entity.description = "Helo";
+						console.log(entity);
+					//}
+					//if (entity.properties.hasOwnProperty("description")) {
+					  //entity.description = '<div style="height: 360px;"> A|A|A ' + entity.properties.description + '</div>';
+					}else{
+						console.log("no");
+					}
+					/*
+					//console.log(entity.children[i].name);
+					console.log(entity._children[0].name);
+					test = entity._children[0].name.split("_");
+					console.log(test[0]);
+					NAME = test[0];
+					HEIGHT = "10";
+					REMARK = "test";
+					var description = '<table class="cesium-infoBox-defaultTable cesium-infoBox-defaultTable-lighter"><tbody>' +
+								 '<tr><td>' + "Id" + '</td><td>' + entity.name + '</td></tr>' +
+								 '<tr><td>' + "Name" + '</td><td><input class="w3-input w3-border" id="username" name="username" type="text" value="'+ NAME +'"></td></tr>' +
+								 '<tr><td>' + "Height" + '</td><td><input class="w3-input w3-border" id="username" name="username" type="text" value="'+ HEIGHT +'"> m</td></td></tr>' +
+								 '<tr><td>' + "Remark" + '</td><td><input class="w3-input w3-border" id="username" name="username" type="text" value="'+ REMARK +'"></td></td></tr>' +
+								 '<tr><td>' + "Photo" + '</td><td><input type="file" id="myfile" name="myfile"></td></tr>' +
+								 '<tr><td>' + "Video" + '</td><td><input type="file" id="myfile" name="myfile"></td></tr>' +
+								 '<tr><td></td><td><button class="w3-button w3-blue">Save</button></td></tr>' +
+								 '</tbody></table>';
+					console.log("description");
+					console.log(description);
+					console.log(entity.description);
+					entity.description = description;
+					*
+				}
+				/
+				//console.log(i);
+				//console.log(entity);
+				//if (i == 0){
+					//console.log(entity._id);
+					//console.log(entity.id);
+					//console.log(Cesium.defined(entity.id));
+					//console.log(Cesium.defined(entity.location));
+				//}
+				//if(entity._id === "4ae97d49-94d9-4d3b-b1b0-badd5b5c648a"){
+					//console.log(entity);
+				//}
+				/*
+				if (Cesium.defined(entity.id)) {
+					//console.log(entity.id);
+					//if (entity.id === 'dc5c71cb-c180-45d2-82cd-9b250a1cf864KMLGeom_bldg00-370b3d19ad-c699-4c92-8467-a37e0b159819'){
+					//	console.log(entity.id);
+					//}
+					 //if(entity.name === "bldg00-36"){
+						//NAME = "Gedung ";
+						//HEIGHT = "2";
+						//REMARK = "ITB";
+					 //}else if (entity.name == "bldg00-37"){
+						NAME = "Gedung " + Math.random().toString(36).replace(/[^a-z]+/g, '');
+						HEIGHT =  Math.floor(Math.random() * Math.floor(5));
+						REMARK = "ITB";
+					 //}
+					 {% if 'username' in session %}
+						{% if session["type_id"] < 3 %}
+							var description = '<table class="cesium-infoBox-defaultTable cesium-infoBox-defaultTable-lighter"><tbody>' +
+								 '<tr><td>' + "Id" + '</td><td>' + entity.name + '</td></tr>' +
+								 '<tr><td>' + "Name" + '</td><td><input class="w3-input w3-border" id="username" name="username" type="text" value="'+ NAME +'"></td></tr>' +
+								 '<tr><td>' + "Height" + '</td><td><input class="w3-input w3-border" id="username" name="username" type="text" value="'+ HEIGHT +'"> m</td></td></tr>' +
+								 '<tr><td>' + "Remark" + '</td><td><input class="w3-input w3-border" id="username" name="username" type="text" value="'+ REMARK +'"></td></td></tr>' +
+								 '<tr><td>' + "Photo" + '</td><td><input type="file" id="myfile" name="myfile"></td></tr>' +
+								 '<tr><td>' + "Video" + '</td><td><input type="file" id="myfile" name="myfile"></td></tr>' +
+								 '<tr><td></td><td><button class="w3-button w3-blue">Save</button></td></tr>' +
+								 '</tbody></table>';
+							 entity.description = description;
+						{% else %}
+							var description = '<table class="cesium-infoBox-defaultTable cesium-infoBox-defaultTable-lighter"><tbody>' +
+								 '<tr><td>' + "Id" + '</td><td>' + entity.name + '</td></tr>' +
+								 '<tr><td>' + "Name" + '</td><td> '+ NAME +'</td></tr>' +
+								 '<tr><td>' + "Height" + '</td><td>'+ HEIGHT +' m</td></tr>' +
+								 '<tr><td>' + "Remark" + '</td><td>'+ REMARK +' </td></tr>' +
+								 '<tr><td>' + "Photo" + '</td><td></td></tr>' +
+								 '<tr><td>' + "Video" + '</td><td></td></tr>' +
+								 '</tbody></table>';
+							 entity.description = description;
+						{% endif %}
+					{% else %}
+							var description = '<table class="cesium-infoBox-defaultTable cesium-infoBox-defaultTable-lighter"><tbody>' +
+								 '<tr><td>' + "Id" + '</td><td>' + entity.name + '</td></tr>' +
+								 '<tr><td>' + "Name" + '</td><td>Gedung A</td></tr>' +
+								 '<tr><td>' + "Height" + '</td><td>5 m</td></tr>' +
+								 '<tr><td>' + "Remark" + '</td><td>ITB </td></tr>' +
+								 '<tr><td>' + "Photo" + '</td><td></td></tr>' +
+								 '<tr><td>' + "Video" + '</td><td></td></tr>' +
+								 '</tbody></table>';
+							 entity.description = description;
+					{% endif %}
+				}
+				/*if (Cesium.defined(entity.location)) {
+					// Entity styling code here
+					 var cartographicPosition = Cesium.Cartographic.fromCartesian(entity.position.getValue(Cesium.JulianDate.now()));
+					 var latitude = Cesium.Math.toDegrees(cartographicPosition.latitude);
+					 var longitude = Cesium.Math.toDegrees(cartographicPosition.longitude);
+		//             // Modify description
+					 var description = '<table class="cesium-infoBox-defaultTable cesium-infoBox-defaultTable-lighter"><tbody>' +
+						 '<tr><th>' + "Longitude" + '</th><td>' + longitude.toFixed(5) + '</td></tr>' +
+						 '<tr><th>' + "Latitude" + '</th><td>' + latitude.toFixed(5) + '</td></tr>' +
+						 '</tbody></table>';
+					 entity.description = description;
+				}
+				/
+			}
+			*/
+			console.log("done2");
+			
+			
+		});
+		
+	
+		/*
+		// HTML overlay for showing feature name on mouseover
+		var nameOverlay = document.createElement('div');
+		viewer.container.appendChild(nameOverlay);
+		nameOverlay.className = 'backdrop';
+		nameOverlay.style.display = 'none';
+		nameOverlay.style.position = 'absolute';
+		nameOverlay.style.bottom = '0';
+		nameOverlay.style.left = '0';
+		nameOverlay.style['pointer-events'] = 'none';
+		nameOverlay.style.padding = '4px';
+		nameOverlay.style.backgroundColor = 'black';
+
+		// Information about the currently selected feature
+		var selected = {
+			feature: undefined,
+			originalColor: new Cesium.Color()
+		};
+
+		// An entity object which will hold info about the currently selected feature for infobox display
+		var selectedEntity = new Cesium.Entity();
+
+		// Get default left click handler for when a feature is not picked on left click
+		var clickHandler = viewer.screenSpaceEventHandler.getInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+		// If silhouettes are supported, silhouette features in blue on mouse over and silhouette green on mouse click.
+		// If silhouettes are not supported, change the feature color to yellow on mouse over and green on mouse click.
+		if (Cesium.PostProcessStageLibrary.isSilhouetteSupported(viewer.scene)) {
+			// Silhouettes are supported
+			var silhouetteBlue = Cesium.PostProcessStageLibrary.createEdgeDetectionStage();
+			silhouetteBlue.uniforms.color = Cesium.Color.BLUE;
+			silhouetteBlue.uniforms.length = 0.01;
+			silhouetteBlue.selected = [];
+
+			var silhouetteGreen = Cesium.PostProcessStageLibrary.createEdgeDetectionStage();
+			silhouetteGreen.uniforms.color = Cesium.Color.LIME;
+			silhouetteGreen.uniforms.length = 0.01;
+			silhouetteGreen.selected = [];
+
+			viewer.scene.postProcessStages.add(Cesium.PostProcessStageLibrary.createSilhouetteStage([silhouetteBlue, silhouetteGreen]));
+
+			// Silhouette a feature blue on hover.
+			viewer.screenSpaceEventHandler.setInputAction(function onMouseMove(movement) {
+				// If a feature was previously highlighted, undo the highlight
+				silhouetteBlue.selected = [];
+
+				// Pick a new feature
+				var pickedFeature = viewer.scene.pick(movement.endPosition);
+				if (!Cesium.defined(pickedFeature)) {
+					nameOverlay.style.display = 'none';
+					return;
+				}
+
+				// A feature was picked, so show it's overlay content
+				nameOverlay.style.display = 'block';
+				nameOverlay.style.bottom = viewer.canvas.clientHeight - movement.endPosition.y + 'px';
+				nameOverlay.style.left = movement.endPosition.x + 'px';
+				var name = pickedFeature.getProperty('name');
+				if (!Cesium.defined(name)) {
+					name = pickedFeature.getProperty('lutype');
+				}
+				nameOverlay.textContent = name;
+
+				// Highlight the feature if it's not already selected.
+				if (pickedFeature !== selected.feature) {
+					silhouetteBlue.selected = [pickedFeature];
+				}
+			}, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
+			// Silhouette a feature on selection and show metadata in the InfoBox.
+			viewer.screenSpaceEventHandler.setInputAction(function onLeftClick(movement) {
+				// If a feature was previously selected, undo the highlight
+				silhouetteGreen.selected = [];
+
+				// Pick a new feature
+				var pickedFeature = viewer.scene.pick(movement.position);
+				if (!Cesium.defined(pickedFeature)) {
+					clickHandler(movement);
+					return;
+				}
+
+				// Select the feature if it's not already selected
+				if (silhouetteGreen.selected[0] === pickedFeature) {
+					return;
+				}
+
+				// Save the selected feature's original color
+				var highlightedFeature = silhouetteBlue.selected[0];
+				if (pickedFeature === highlightedFeature) {
+					silhouetteBlue.selected = [];
+				}
+
+				// Highlight newly selected feature
+				silhouetteGreen.selected = [pickedFeature];
+
+
+				// Set feature infobox description
+				var featureName = pickedFeature.getProperty('gml_id');
+				selectedEntity.name = featureName;
+				selectedEntity.description = 'Loading <div class="cesium-infoBox-loading"></div>';
+				viewer.selectedEntity = selectedEntity;
+				selectedEntity.description = '<table class="cesium-infoBox-defaultTable"><tbody>' +
+											 '<tr><th>Land Use Type</th><td>' + pickedFeature.getProperty('lutype') + '</td></tr>' +
+											 '<tr><th>GML Code</th><td>' + pickedFeature.getProperty('gml_funcid') + '</td></tr>' +
+											 '<tr><th>Sub City Area</th><td>' + pickedFeature.getProperty('swkname') + '</td></tr>' +
+											 '<tr><th>Zone</th><td>' + pickedFeature.getProperty('zone_en') + '</td></tr>' +
+											 '<tr><th>Height</th><td>' + pickedFeature.getProperty('citygml_measured_height') + '</td></tr>' +
+											 '</tbody></table>';
+			}, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+		} else {
+			// Silhouettes are not supported. Instead, change the feature color.
+
+			// Silhouettes are not supported. Instead, change the feature color.
+
+			// Information about the currently highlighted feature
+			var highlighted = {
+				feature : undefined,
+				originalColor : new Cesium.Color()
+			};
+
+			// Color a feature yellow on hover.
+			viewer.screenSpaceEventHandler.setInputAction(function onMouseMove(movement) {
+				// If a feature was previously highlighted, undo the highlight
+				if (Cesium.defined(highlighted.feature)) {
+					highlighted.feature.color = highlighted.originalColor;
+					highlighted.feature = undefined;
+				}
+				// Pick a new feature
+				var pickedFeature = viewer.scene.pick(movement.endPosition);
+				if (!Cesium.defined(pickedFeature)) {
+					nameOverlay.style.display = 'none';
+					return;
+				}
+				// A feature was picked, so show it's overlay content
+				nameOverlay.style.display = 'block';
+				nameOverlay.style.bottom = viewer.canvas.clientHeight - movement.endPosition.y + 'px';
+				nameOverlay.style.left = movement.endPosition.x + 'px';
+				var name = pickedFeature.getProperty('name');
+				if (!Cesium.defined(name)) {
+					name = pickedFeature.getProperty('id');
+				}
+				nameOverlay.textContent = name;
+				// Highlight the feature if it's not already selected.
+				if (pickedFeature !== selected.feature) {
+					highlighted.feature = pickedFeature;
+					Cesium.Color.clone(pickedFeature.color, highlighted.originalColor);
+					pickedFeature.color = Cesium.Color.YELLOW;
+				}
+			}, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
+			// Color a feature on selection and show metadata in the InfoBox.
+			viewer.screenSpaceEventHandler.setInputAction(function onLeftClick(movement) {
+				// If a feature was previously selected, undo the highlight
+				if (Cesium.defined(selected.feature)) {
+					selected.feature.color = selected.originalColor;
+					selected.feature = undefined;
+				}
+				// Pick a new feature
+				var pickedFeature = viewer.scene.pick(movement.position);
+				if (!Cesium.defined(pickedFeature)) {
+					clickHandler(movement);
+					return;
+				}
+				// Select the feature if it's not already selected
+				if (selected.feature === pickedFeature) {
+					return;
+				}
+				selected.feature = pickedFeature;
+				// Save the selected feature's original color
+				if (pickedFeature === highlighted.feature) {
+					Cesium.Color.clone(highlighted.originalColor, selected.originalColor);
+					highlighted.feature = undefined;
+				} else {
+					Cesium.Color.clone(pickedFeature.color, selected.originalColor);
+				}
+				// Highlight newly selected feature
+				pickedFeature.color = Cesium.Color.LIME;
+			}, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+		}
+
+		*/
+	}
+	
+	function load_bandung(){
+		//$("#spatialplans_layer").html('');
+		$("#spatialplans_layer").append('<div id="lyr1">Layer 1 .. loading</p>');
+		var tileset = viewer.scene.primitives.add(new Cesium.Cesium3DTileset({
+			url : "{{ url_for('static', filename='data/spatplan/bandung/spatplan2d/GenericCityObject/tileset.json') }}"
+		}));
+		
+		$("#lyr1").html('<div class="w3-row"><div class="w3-col l2"><label class="switch"><input id="layerC" type="checkbox" checked><span class="slider round"></span></label></div><div class="w3-col l8"><span>Bandung</span></div><div class="w3-col l2"></div></div>');
+		$('#layerC').on('click', function() {
+			//console.log('click');
+			if($(this).is(":checked")){
+				//console.log('checked');
+				//console.log(tileset);
+				tileset.show = true;
+				
+			}else{
+				//console.log('non checked');
+				//console.log(tileset);
+				tileset.show = false;
+			}
+		});
+	
+		//tileset.tileLoad.addEventListener(function(tile) {
+		//	console.log('A tile was loaded.');
+		//});
+		/*/
+		var tilesetUrl = "{{ url_for('static', filename='data/spatplan/bandung/spatplan2d/GenericCityObject/tileset.json') }}";
+		var spatplan = Cesium.Cesium3DTileset.loadJson(tilesetUrl);
+		
+		spatplan.then(function(dataSource) {
+			viewer.scene.primitives.add(dataSource);
+		});
+		*/
+		/// Color buildings by type of Land Use.
+		function colorByLUType() {
+			tileset.style = new Cesium.Cesium3DTileStyle({
+				color : {
+					conditions : [
+					  ["${lutype} === 'administration office'", "rgba(255, 175, 125, 1.0)"],
+					  ["${lutype} === 'education'", "rgba(240, 175, 125, 1.0)"],
+					  ["${lutype} === 'electric substation'", "rgba(230, 175, 125, 1.0)"],
+					  ["${lutype} === 'high voltage area'", "rgba(230, 175, 125, 1.0)"],
+					  ["${lutype} === 'wastewater treatment'", "rgba(175, 175, 230, 1.0)"],
+					  ["${lutype} === 'socio cultur'", "rgba(175, 230, 125, 1.0)"],
+					  ["${lutype} === 'health services'", "rgba(175, 175, 125, 1.0)"],
+					  ["${lutype} === 'sport'", "rgba(175, 175, 125, 1.0)"],
+					  ["${lutype} === 'power plant'", "rgba(230, 175, 125, 1.0)"],
+					  ["${lutype} === 'religious'","rgba(175, 175, 125, 1.0)"],
+					  
+					  
+					  ["${lutype} === 'natural conservation'", "rgba(100, 255, 100, 1.0)"],
+					  ["${lutype} === 'natural preservation'", "rgba(100, 255, 100, 1.0)"],
+					  ["${lutype} === 'open green privat'", "rgba(125, 255, 100, 1.0)"],
+					  ["${lutype} === 'open green public'", "rgba(125, 255, 100, 1.0)"],
+					  ["${lutype} === 'open public space'", "rgba(125, 255, 100, 1.0)"],
+					  ["${lutype} === 'urban forest'", "rgba(100, 255, 100, 1.0)"],
+					  
+					  ["${lutype} === 'pond'", "rgba(175, 175, 255, 1.0)"],
+					  ["${lutype} === 'lake'", "rgba(175, 175, 255, 1.0)"],
+									
+					  ["${lutype} === 'agriculture'", "rgba(255, 175, 175, 1.0)"],
+					  ["${lutype} === 'cemetery'", "rgba(255, 175, 175, 1.0)"],
+					  ["${lutype} === 'airfield area'", "rgba(255, 175, 175, 1.0)"],
+					  ["${lutype} === 'toll road area'", "rgba(255, 175, 175, 1.0)"],
+					  ["${lutype} === 'rail area'", "rgba(255, 175, 175, 1.0)"],
+					  ["${lutype} === 'recreation'","rgba(255, 175, 175, 1.0)"],
+					  ["${lutype} === 'road area'","rgba(255, 175, 175, 1.0)"],
+					  
+					  ["${lutype} === 'river area'", "rgba(100, 100, 175, 1.0)"],
+					  
+					  ["${lutype} === 'road'", "rgba(50, 50, 50, 1.0)"],  
+					  ["${lutype} === 'transportation'", "rgba(100, 100, 100, 1.0)"], 
+					  
+					  ["${lutype} === 'mixed - high intensity'", "rgba(255, 230, 51, 1.0)"], 
+					  ["${lutype} === 'mixed - medium intensity'","rgba(255, 210, 51, 1.0)"], 
+					  ["${lutype} === 'industry and commercial'", "rgba(255, 255, 51, 1.0)"], 
+					  ["${lutype} === 'commercial and linier services'","rgba(255, 185, 51, 1.0)"],
+					  ["${lutype} === 'commercial centre and services'","rgba(255, 145, 51, 1.0)"],
+					  ["${lutype} === 'traditional market'", "rgba(255, 150, 51, 1.0)"],
+					  
+					  ["${lutype} === 'residential - high density'", "rgba(200, 100, 51, 1.0)"],
+					  ["${lutype} === 'residential - low density'", "rgba(200, 175, 51, 1.0)"],
+					  ["${lutype} === 'residential - medium density'", "rgba(200, 150, 51, 1.0)"],
+					  
+						['true', 'color("blue")']
+					]
+				}
+			});
+		}
+		
+		colorByLUType();
+	
+	}
+	
+	function load_jakarta(){
+		
+		
+		//$("#spatialplans_layer").html('');
+		$("#spatialplans_layer").append('<div id="lyr_jkt">loading..</p>');
+		var tileset2 = viewer.scene.primitives.add(new Cesium.Cesium3DTileset({
+			url : "{{ url_for('static', filename='data/spatplan/jakarta/spatplan2d_0/GenericCityObject/tileset.json') }}"
+		}));
+		
+		$("#lyr_jkt").html('<div class="w3-row"><div class="w3-col l2"><label class="switch"><input id="layerJ" type="checkbox" checked><span class="slider round"></span></label></div><div class="w3-col l8"><span>Jakarta</span></div><div class="w3-col l2"></div></div>');
+		$('#layerJ').on('click', function() {
+			//console.log('click');
+			if($(this).is(":checked")){
+				//console.log('checked');
+				//console.log(tileset);
+				tileset2.show = true;
+				
+			}else{
+				//console.log('non checked');
+				//console.log(tileset);
+				tileset2.show = false;
+			}
+		});
+		
+		/// Coloring spatial planning by type of Land Use.
+		function colorByLUTypeJakarta() {
+			tileset2.style = new Cesium.Cesium3DTileStyle({
+				color : {
+					conditions : [
+					  ["${lutype} === 'Residential - low density'", "rgba(200, 175, 51, 1.0)"],
+					  ["${lutype} === 'Residential - vertical low density'", "rgba(225, 150, 51, 1.0)"],
+					  ["${lutype} === 'Residential - vertical'", "rgba(175, 150, 51, 1.0)"],
+					  ["${lutype} === 'Residential - vertical medium density'", "rgba(200, 150, 51, 1.0)"], 
+					  ["${lutype} === 'Residential - kampoong'", "rgba(200, 100, 51, 1.0)"],
+					  
+					  ["${lutype} === 'Industry'", "rgba(255, 255, 51, 1.0)"],
+					  ["${lutype} === 'Industry and warehouse'","rgba(255, 185, 51, 1.0)"],
+					  ["${lutype} === 'Mixed'","rgba(255, 145, 51, 1.0)"],
+					  
+					  ["${lutype} === 'Business, commercials and services - Low density'","rgba(255, 210, 51, 1.0)"], 
+					  ["${lutype} === 'Business, commercials and services'", "rgba(255, 230, 51, 1.0)"], 
+					  
+					  ["${lutype} === 'Reclamation zone'", "rgba(100, 175, 175, 1.0)"],     
+					  ["${lutype} === 'Open space blue'", "rgba(100, 100, 175, 1.0)"],
+					  
+					  ["${lutype} === 'Cemetery'", "rgba(255, 175, 175, 1.0)"],
+					  ["${lutype} === 'Urban forest'", "rgba(100, 255, 100, 1.0)"],
+					  ["${lutype} === 'Park'", "rgba(100, 255, 100, 1.0)"],
+					  ["${lutype} === 'Green and Recreation'", "rgba(125, 255, 100, 1.0)"],
+					  ["${lutype} === 'Green corridor'", "rgba(125, 255, 100, 1.0)"],
+					  ["${lutype} === 'Protection zone'", "rgba(125, 255, 100, 1.0)"],
+					  
+					  ["${lutype} === 'Government - local'","rgba(175, 175, 125, 1.0)"],
+					  ["${lutype} === 'Government -  national'","rgba(175, 175, 125, 1.0)"],
+					  ["${lutype} === 'Diplomatic zone'", "rgba(230, 175, 125, 1.0)"],
+					  ["${lutype} === 'Public and social services'", "rgba(175, 175, 125, 1.0)"],
+					  
+					  ['true', 'color("blue")']
+					]
+				}
+			});
+		}
+		colorByLUTypeJakarta();
+	}
+  </script>
+{% endblock %}

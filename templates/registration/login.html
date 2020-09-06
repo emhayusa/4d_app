@@ -1,0 +1,18 @@
+{% extends 'main.html' %}
+{% block header %}
+  {% block title %}Login{% endblock %}
+{% endblock %}
+
+{% block content %}
+<div class="main-agileinfo">
+  <div class="agileits-top">
+    <form method="post" action="http://tanahair.indonesia.go.id/portal-web/login-process">
+      <input class="text" type="text" name="username" placeholder="Username" required="">
+      <input class="text" type="password" name="password" placeholder="Password" required="">
+      <input type="submit" value="SIGNIN">
+    </form>
+    <p>Don't have an account? <a href="{{ url_for('registration.register') }}"> Register Now!</a></p>
+    <p>Forgot your password? <a href="{{ url_for('registration.forgot') }}"> Click Here!</a></p>
+  </div>
+</div>
+{% endblock %}
