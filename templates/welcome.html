@@ -380,7 +380,7 @@
 					  complete: function(response) {
 						data = response.responseJSON;
 						if (data.video_file == null)
-							VIDEO  = '<img src="{{ url_for('static', filename='no_video.png')}}" width="200" height="100">';
+							VIDEO  = '<img src="{{ url_for('static', filename='no_video.jpg')}}" width="200" height="100">';
 						else 
 							VIDEO  = '<video width="200" height="100" controls=""><source src="'+'{{ url_for('static', filename='data/videos/1')}}'.replace(1,data.video_file)+'" type="video/mp4"> Your browser does not support HTML video.</video>'; 						console.log(VIDEO);
 						{% if 'username' in session %}

@@ -3,3 +3,5 @@
 *.mp4
 __pycache__/*
 static/data/spatplan/*
+static/data/export/kml/*
+static/data/photos/*
