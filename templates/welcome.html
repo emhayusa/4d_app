@@ -62,6 +62,104 @@
 	
 <!-- <script src=".{{ url_for('static', filename='js/CitydbKmlLayer.js') }}"></script> -->
 <script>
+	var kota = [];
+	var entities = [];
+	var bbox = [
+				[107.594261,-6.904013,107.594261,-6.882041,107.626705,-6.882041,107.626705,-6.904013,107.594261,-6.904013],
+				[106.750923,-6.197478,106.750923,-6.161318,106.800362,-6.161318,106.800362,-6.197478,106.750923,-6.197478],
+				[106.818438,-6.184083,106.818438,-6.169925,106.837406,-6.169925,106.837406,-6.184083,106.818438,-6.184083],
+				[106.825974,-6.268585,106.825974,-6.233111,106.888973,-6.233111,106.888973,-6.268585,106.825974,-6.268585],
+				[106.843895,-6.210756,106.843895,-6.153615,106.933674,-6.153615,106.933674,-6.210756,106.843895,-6.210756],
+				[106.798611,-6.168329,106.798611,-6.126537,106.862469,-6.126537,106.862469,-6.168329,106.798611,-6.168329]
+			   ];
+	
+	d1="data/spatplan/bandung/spatplan2d/GenericCityObject/tileset.json";
+	d2="data/spatplan/jakarta/spatplan2d_0/GenericCityObject/tileset.json";
+	var spatial_plan = [d1, d2, d2, d2, d2, d2];
+	t1 =  [["${lutype} === 'administration office'", "rgba(255, 175, 125, 1.0)"],
+					  ["${lutype} === 'education'", "rgba(240, 175, 125, 1.0)"],
+					  ["${lutype} === 'electric substation'", "rgba(230, 175, 125, 1.0)"],
+					  ["${lutype} === 'high voltage area'", "rgba(230, 175, 125, 1.0)"],
+					  ["${lutype} === 'wastewater treatment'", "rgba(175, 175, 230, 1.0)"],
+					  ["${lutype} === 'socio cultur'", "rgba(175, 230, 125, 1.0)"],
+					  ["${lutype} === 'health services'", "rgba(175, 175, 125, 1.0)"],
+					  ["${lutype} === 'sport'", "rgba(175, 175, 125, 1.0)"],
+					  ["${lutype} === 'power plant'", "rgba(230, 175, 125, 1.0)"],
+					  ["${lutype} === 'religious'","rgba(175, 175, 125, 1.0)"],
+					  
+					  
+					  ["${lutype} === 'natural conservation'", "rgba(100, 255, 100, 1.0)"],
+					  ["${lutype} === 'natural preservation'", "rgba(100, 255, 100, 1.0)"],
+					  ["${lutype} === 'open green privat'", "rgba(125, 255, 100, 1.0)"],
+					  ["${lutype} === 'open green public'", "rgba(125, 255, 100, 1.0)"],
+					  ["${lutype} === 'open public space'", "rgba(125, 255, 100, 1.0)"],
+					  ["${lutype} === 'urban forest'", "rgba(100, 255, 100, 1.0)"],
+					  
+					  ["${lutype} === 'pond'", "rgba(175, 175, 255, 1.0)"],
+					  ["${lutype} === 'lake'", "rgba(175, 175, 255, 1.0)"],
+									
+					  ["${lutype} === 'agriculture'", "rgba(255, 175, 175, 1.0)"],
+					  ["${lutype} === 'cemetery'", "rgba(255, 175, 175, 1.0)"],
+					  ["${lutype} === 'airfield area'", "rgba(255, 175, 175, 1.0)"],
+					  ["${lutype} === 'toll road area'", "rgba(255, 175, 175, 1.0)"],
+					  ["${lutype} === 'rail area'", "rgba(255, 175, 175, 1.0)"],
+					  ["${lutype} === 'recreation'","rgba(255, 175, 175, 1.0)"],
+					  ["${lutype} === 'road area'","rgba(255, 175, 175, 1.0)"],
+					  
+					  ["${lutype} === 'river area'", "rgba(100, 100, 175, 1.0)"],
+					  
+					  ["${lutype} === 'road'", "rgba(50, 50, 50, 1.0)"],  
+					  ["${lutype} === 'transportation'", "rgba(100, 100, 100, 1.0)"], 
+					  
+					  ["${lutype} === 'mixed - high intensity'", "rgba(255, 230, 51, 1.0)"], 
+					  ["${lutype} === 'mixed - medium intensity'","rgba(255, 210, 51, 1.0)"], 
+					  ["${lutype} === 'industry and commercial'", "rgba(255, 255, 51, 1.0)"], 
+					  ["${lutype} === 'commercial and linier services'","rgba(255, 185, 51, 1.0)"],
+					  ["${lutype} === 'commercial centre and services'","rgba(255, 145, 51, 1.0)"],
+					  ["${lutype} === 'traditional market'", "rgba(255, 150, 51, 1.0)"],
+					  
+					  ["${lutype} === 'residential - high density'", "rgba(200, 100, 51, 1.0)"],
+					  ["${lutype} === 'residential - low density'", "rgba(200, 175, 51, 1.0)"],
+					  ["${lutype} === 'residential - medium density'", "rgba(200, 150, 51, 1.0)"],
+					  
+						['true', 'color("blue")']]
+	t2 =  [
+					  ["${lutype} === 'Residential - low density'", "rgba(200, 175, 51, 1.0)"],
+					  ["${lutype} === 'Residential - vertical low density'", "rgba(225, 150, 51, 1.0)"],
+					  ["${lutype} === 'Residential - vertical'", "rgba(175, 150, 51, 1.0)"],
+					  ["${lutype} === 'Residential - vertical medium density'", "rgba(200, 150, 51, 1.0)"], 
+					  ["${lutype} === 'Residential - kampoong'", "rgba(200, 100, 51, 1.0)"],
+					  
+					  ["${lutype} === 'Industry'", "rgba(255, 255, 51, 1.0)"],
+					  ["${lutype} === 'Industry and warehouse'","rgba(255, 185, 51, 1.0)"],
+					  ["${lutype} === 'Mixed'","rgba(255, 145, 51, 1.0)"],
+					  
+					  ["${lutype} === 'Business, commercials and services - Low density'","rgba(255, 210, 51, 1.0)"], 
+					  ["${lutype} === 'Business, commercials and services'", "rgba(255, 230, 51, 1.0)"], 
+					  
+					  ["${lutype} === 'Reclamation zone'", "rgba(100, 175, 175, 1.0)"],     
+					  ["${lutype} === 'Open space blue'", "rgba(100, 100, 175, 1.0)"],
+					  
+					  ["${lutype} === 'Cemetery'", "rgba(255, 175, 175, 1.0)"],
+					  ["${lutype} === 'Urban forest'", "rgba(100, 255, 100, 1.0)"],
+					  ["${lutype} === 'Park'", "rgba(100, 255, 100, 1.0)"],
+					  ["${lutype} === 'Green and Recreation'", "rgba(125, 255, 100, 1.0)"],
+					  ["${lutype} === 'Green corridor'", "rgba(125, 255, 100, 1.0)"],
+					  ["${lutype} === 'Protection zone'", "rgba(125, 255, 100, 1.0)"],
+					  
+					  ["${lutype} === 'Government - local'","rgba(175, 175, 125, 1.0)"],
+					  ["${lutype} === 'Government -  national'","rgba(175, 175, 125, 1.0)"],
+					  ["${lutype} === 'Diplomatic zone'", "rgba(230, 175, 125, 1.0)"],
+					  ["${lutype} === 'Public and social services'", "rgba(175, 175, 125, 1.0)"],
+					  
+					  ['true', 'color("blue")']
+					];
+	var template = [t1, t2, t2, t2, t2, t2];
+	
+	//kml1 = "data/export/kml/yusa.tuberlin_3DBuildingSchemaLOD2_itb_labtek_geometry.kml";
+	//list = []
+	//list = [[kml1], [],[],[],[],[]];
+	
 	var imageryProviders = Cesium.createDefaultImageryProviderViewModels();
 	var selectedImageryProviderIndex = 2;  // MapBox Street is 5th in the list.
 	// Create a clock that loops on Christmas day 2013 and runs in real-time.
@@ -485,207 +583,48 @@
 					}
 				}, false);
 			}, false);
-			
-	var kota = [ "Bandung", "Jakarta Barat", "Jakarta Pusat", "Jakarta Selatan", "Jakarta Timur", "Jakarta Utara" ];
-	d1="data/spatplan/bandung/spatplan2d/GenericCityObject/tileset.json";
-	d2="data/spatplan/jakarta/spatplan2d_0/GenericCityObject/tileset.json";
-	var spatial_plan = [d1, d2, d2, d2, d2, d2];
-	t1 =  [["${lutype} === 'administration office'", "rgba(255, 175, 125, 1.0)"],
-					  ["${lutype} === 'education'", "rgba(240, 175, 125, 1.0)"],
-					  ["${lutype} === 'electric substation'", "rgba(230, 175, 125, 1.0)"],
-					  ["${lutype} === 'high voltage area'", "rgba(230, 175, 125, 1.0)"],
-					  ["${lutype} === 'wastewater treatment'", "rgba(175, 175, 230, 1.0)"],
-					  ["${lutype} === 'socio cultur'", "rgba(175, 230, 125, 1.0)"],
-					  ["${lutype} === 'health services'", "rgba(175, 175, 125, 1.0)"],
-					  ["${lutype} === 'sport'", "rgba(175, 175, 125, 1.0)"],
-					  ["${lutype} === 'power plant'", "rgba(230, 175, 125, 1.0)"],
-					  ["${lutype} === 'religious'","rgba(175, 175, 125, 1.0)"],
-					  
-					  
-					  ["${lutype} === 'natural conservation'", "rgba(100, 255, 100, 1.0)"],
-					  ["${lutype} === 'natural preservation'", "rgba(100, 255, 100, 1.0)"],
-					  ["${lutype} === 'open green privat'", "rgba(125, 255, 100, 1.0)"],
-					  ["${lutype} === 'open green public'", "rgba(125, 255, 100, 1.0)"],
-					  ["${lutype} === 'open public space'", "rgba(125, 255, 100, 1.0)"],
-					  ["${lutype} === 'urban forest'", "rgba(100, 255, 100, 1.0)"],
-					  
-					  ["${lutype} === 'pond'", "rgba(175, 175, 255, 1.0)"],
-					  ["${lutype} === 'lake'", "rgba(175, 175, 255, 1.0)"],
-									
-					  ["${lutype} === 'agriculture'", "rgba(255, 175, 175, 1.0)"],
-					  ["${lutype} === 'cemetery'", "rgba(255, 175, 175, 1.0)"],
-					  ["${lutype} === 'airfield area'", "rgba(255, 175, 175, 1.0)"],
-					  ["${lutype} === 'toll road area'", "rgba(255, 175, 175, 1.0)"],
-					  ["${lutype} === 'rail area'", "rgba(255, 175, 175, 1.0)"],
-					  ["${lutype} === 'recreation'","rgba(255, 175, 175, 1.0)"],
-					  ["${lutype} === 'road area'","rgba(255, 175, 175, 1.0)"],
-					  
-					  ["${lutype} === 'river area'", "rgba(100, 100, 175, 1.0)"],
-					  
-					  ["${lutype} === 'road'", "rgba(50, 50, 50, 1.0)"],  
-					  ["${lutype} === 'transportation'", "rgba(100, 100, 100, 1.0)"], 
-					  
-					  ["${lutype} === 'mixed - high intensity'", "rgba(255, 230, 51, 1.0)"], 
-					  ["${lutype} === 'mixed - medium intensity'","rgba(255, 210, 51, 1.0)"], 
-					  ["${lutype} === 'industry and commercial'", "rgba(255, 255, 51, 1.0)"], 
-					  ["${lutype} === 'commercial and linier services'","rgba(255, 185, 51, 1.0)"],
-					  ["${lutype} === 'commercial centre and services'","rgba(255, 145, 51, 1.0)"],
-					  ["${lutype} === 'traditional market'", "rgba(255, 150, 51, 1.0)"],
-					  
-					  ["${lutype} === 'residential - high density'", "rgba(200, 100, 51, 1.0)"],
-					  ["${lutype} === 'residential - low density'", "rgba(200, 175, 51, 1.0)"],
-					  ["${lutype} === 'residential - medium density'", "rgba(200, 150, 51, 1.0)"],
-					  
-						['true', 'color("blue")']]
-	t2 =  [
-					  ["${lutype} === 'Residential - low density'", "rgba(200, 175, 51, 1.0)"],
-					  ["${lutype} === 'Residential - vertical low density'", "rgba(225, 150, 51, 1.0)"],
-					  ["${lutype} === 'Residential - vertical'", "rgba(175, 150, 51, 1.0)"],
-					  ["${lutype} === 'Residential - vertical medium density'", "rgba(200, 150, 51, 1.0)"], 
-					  ["${lutype} === 'Residential - kampoong'", "rgba(200, 100, 51, 1.0)"],
-					  
-					  ["${lutype} === 'Industry'", "rgba(255, 255, 51, 1.0)"],
-					  ["${lutype} === 'Industry and warehouse'","rgba(255, 185, 51, 1.0)"],
-					  ["${lutype} === 'Mixed'","rgba(255, 145, 51, 1.0)"],
-					  
-					  ["${lutype} === 'Business, commercials and services - Low density'","rgba(255, 210, 51, 1.0)"], 
-					  ["${lutype} === 'Business, commercials and services'", "rgba(255, 230, 51, 1.0)"], 
-					  
-					  ["${lutype} === 'Reclamation zone'", "rgba(100, 175, 175, 1.0)"],     
-					  ["${lutype} === 'Open space blue'", "rgba(100, 100, 175, 1.0)"],
-					  
-					  ["${lutype} === 'Cemetery'", "rgba(255, 175, 175, 1.0)"],
-					  ["${lutype} === 'Urban forest'", "rgba(100, 255, 100, 1.0)"],
-					  ["${lutype} === 'Park'", "rgba(100, 255, 100, 1.0)"],
-					  ["${lutype} === 'Green and Recreation'", "rgba(125, 255, 100, 1.0)"],
-					  ["${lutype} === 'Green corridor'", "rgba(125, 255, 100, 1.0)"],
-					  ["${lutype} === 'Protection zone'", "rgba(125, 255, 100, 1.0)"],
-					  
-					  ["${lutype} === 'Government - local'","rgba(175, 175, 125, 1.0)"],
-					  ["${lutype} === 'Government -  national'","rgba(175, 175, 125, 1.0)"],
-					  ["${lutype} === 'Diplomatic zone'", "rgba(230, 175, 125, 1.0)"],
-					  ["${lutype} === 'Public and social services'", "rgba(175, 175, 125, 1.0)"],
-					  
-					  ['true', 'color("blue")']
-					];
-	var template = [t1, t2, t2, t2, t2, t2];
-	var bbox = [
-				[107.594261,-6.904013,107.594261,-6.882041,107.626705,-6.882041,107.626705,-6.904013,107.594261,-6.904013],
-				[106.750923,-6.197478,106.750923,-6.161318,106.800362,-6.161318,106.800362,-6.197478,106.750923,-6.197478],
-				[106.818438,-6.184083,106.818438,-6.169925,106.837406,-6.169925,106.837406,-6.184083,106.818438,-6.184083],
-				[106.825974,-6.268585,106.825974,-6.233111,106.888973,-6.233111,106.888973,-6.268585,106.825974,-6.268585],
-				[106.843895,-6.210756,106.843895,-6.153615,106.933674,-6.153615,106.933674,-6.210756,106.843895,-6.210756],
-				[106.798611,-6.168329,106.798611,-6.126537,106.862469,-6.126537,106.862469,-6.168329,106.798611,-6.168329]
-			   ];
+
+	//var kota = [ "Bandung", "Jakarta Barat", "Jakarta Pusat", "Jakarta Selatan", "Jakarta Timur", "Jakarta Utara" ];
+	function load_kota_list(){
+		$.ajax({
+		  url: '{{ url_api }}area/',
+		  type: 'GET',
+		  /*
+		  headers: {
+			"Authorization": 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1NzgwNDA0MDMsImlhdCI6MTU3Nzk1Mzk5OCwic3ViIjoyfQ.aOcc8AoywBLEslHjTpUO1RD5bPXFLmcIzpMLq5HpgCI'  
+		  },
+		  */
+		  //dataType: 'json',
+		  contentType: 'application/json',
+		  complete: function(response) {
+			data = response.responseJSON;
+			//console.log(data);
+			$.each(data.data, function(i, v) {
+					//console.log(i + " " + v.buildings.gml_id + ' ' + v.function + ' ' + v.height + ' ' + v.name + ' ' + v.timestamp.substr(0, 10));
+					//$('#tbl3').append("<tr><td>"+ j + "</td><td><video width='200' height='100' controls=''><source src='" + "{{ url_for('static', filename='data/videos/1')}}".replace(1,v.video_file)+"' width='200' height='100' type='video/mp4'> Your browser does not support HTML video.</video></td><td>"+ v.timestamp.replace("T"," ").substr(0, 19)+"</td><td>" + v.contributor+ "</td></tr>");
+					//j++;
+					//console.log(v.id + " " + v.name);
+					//$('#attribut_history').append(v);
+					//console.log(i + " " + v.id + " " + v.area_name);
+					a = viewer.entities.add({
+						polygon : {
+						hierarchy : Cesium.Cartesian3.fromDegreesArray(bbox[i]),
+						height : 0,
+						material : Cesium.Color.RED.withAlpha(0),
+						outline : true,
+						outlineColor : Cesium.Color.BLACK.withAlpha(0)
+						}
+					});
+					entities.push(a);
+					kota.push(v.area_name);
+					$('#area_id').append('<option value="'+ v.id +'">'+v.area_name+'</option>');
+					
+				});
+		  }
+		});
 	
-	
-	var entities = [];
-	
-	for (i = 0; i < kota.length; i++){
-		//console.log(kota[i]);
-		a = viewer.entities.add({
-				polygon : {
-				hierarchy : Cesium.Cartesian3.fromDegreesArray(bbox[i]),
-				height : 0,
-				material : Cesium.Color.RED.withAlpha(0),
-				outline : true,
-				outlineColor : Cesium.Color.BLACK.withAlpha(0)
-				}
-			});
-		entities.push(a);
-		$('#area_id').append('<option value="'+ i +'">'+kota[i]+'</option>');
 	}
-	//console.log(entities[0]);
-	/*
-	var bandung = viewer.entities.add({
-	  polygon : {
-		hierarchy : Cesium.Cartesian3.fromDegreesArray(),
-		height : 0,
-		material : Cesium.Color.RED.withAlpha(0),
-		outline : true,
-		outlineColor : Cesium.Color.BLACK.withAlpha(0)
-	  }
-	});
-	//106.750923,-6.197478,106.800362,-6.161318
-	var jakarta_barat = viewer.entities.add({
-	  polygon : {
-		hierarchy : Cesium.Cartesian3.fromDegreesArray([
-								  106.750923,-6.197478,
-								  106.750923,-6.161318,
-								  106.800362,-6.161318,
-								  106.800362,-6.197478,
-								  106.750923,-6.197478]),
-		height : 0,
-		material : Cesium.Color.RED.withAlpha(0),
-		outline : true,
-		outlineColor : Cesium.Color.BLACK.withAlpha(0)
-	  }
-	});
-	
-	var jakarta_pusat = viewer.entities.add({
-	  polygon : {
-		hierarchy : Cesium.Cartesian3.fromDegreesArray([
-								  106.818438,-6.184083,
-								  106.818438,-6.169925,
-								  106.837406,-6.169925,
-								  106.837406,-6.184083,
-								  106.818438,-6.184083]),
-		height : 0,
-		material : Cesium.Color.RED.withAlpha(0),
-		outline : true,
-		outlineColor : Cesium.Color.BLACK.withAlpha(0)
-	  }
-	});
-	var jakarta_selatan = viewer.entities.add({
-	  polygon : {
-		hierarchy : Cesium.Cartesian3.fromDegreesArray([
-								  106.825974,-6.268585,
-								  106.825974,-6.233111,
-								  106.888973,-6.233111,
-								  106.888973,-6.268585,
-								  106.825974,-6.268585]),
-		height : 0,
-		material : Cesium.Color.RED.withAlpha(0),
-		outline : true,
-		outlineColor : Cesium.Color.BLACK.withAlpha(0)
-	  }
-	});
-	
-	var jakarta_utara = viewer.entities.add({
-	  polygon : {
-		hierarchy : Cesium.Cartesian3.fromDegreesArray([
-								  106.798611,-6.168329,
-								  106.798611,-6.126537,
-								  106.862469,-6.126537,
-								  106.862469,-6.168329,
-								  106.798611,-6.168329]),
-		height : 0,
-		material : Cesium.Color.RED.withAlpha(0),
-		outline : true,
-		outlineColor : Cesium.Color.BLACK.withAlpha(0)
-	  }
-	});
-	
-	var jakarta_timur = viewer.entities.add({
-	  polygon : {
-		hierarchy : Cesium.Cartesian3.fromDegreesArray([
-								  106.843895,-6.210756,
-								  106.843895,-6.153615,
-								  106.933674,-6.153615,
-								  106.933674,-6.210756,
-								  106.843895,-6.210756]),
-		height : 0,
-		material : Cesium.Color.RED.withAlpha(0),
-		outline : true,
-		outlineColor : Cesium.Color.BLACK.withAlpha(0)
-	  }
-	});
-	*/
-	//function dateConverter(UNIX_timestamp){
-	//	  return new Date(UNIX_timestamp).toISOString();
-	//}
-	
-	//console.log(dateConverter(1597881600100));
+
 	
 	$( document ).ready(function() {
 		$("#management").append('<p>Layer Management</p>');
@@ -701,47 +640,19 @@
 		$('#area_id').on('change', function() {
 			
 			//if($("#area_id").val() != ""){
-			viewer.flyTo(entities[this.value]);
-			load_spatial_plan(this.value);
+			viewer.flyTo(entities[this.value - 1]);
+			load_spatial_plan(this.value - 1);
 			load_building(this.value);
 			//}
-			/*
-			switch(this.value) {
-			  case '1':
-				viewer.flyTo(bandung);
-				load_bandung_building();
-				break;
-			  case '2':
-				viewer.flyTo(jakarta_barat);
-				break;
-			  case '3':
-				viewer.flyTo(jakarta_pusat);
-				break;
-			  case '4':
-				viewer.flyTo(jakarta_selatan);
-				break;
-			  case '5':
-				viewer.flyTo(jakarta_timur);
-				break;
-			  case '6':
-				viewer.flyTo(jakarta_utara);
-				break;
-			  //default:
-				// code block
-			}
-			*/
-		  
 		});
-		
+		load_kota_list();
 	
 	});
 
 	//viewer.zoomTo(wyoming);
 	
 	//var scene = viewer.scene;
-	kml1 = "data/export/kml/yusa.tuberlin_3DBuildingSchemaLOD2_itb_labtek_geometry.kml";
 	
-	list = [[kml1], [],[],[],[],[]];
 	
 	function load_building(index){
 		
@@ -755,7 +666,64 @@
 		// load dinamis??
 		
 		$("#buildings_layer").html('');
-		$("#buildings_layer").append('<div id="layer2">Layer Building.. loading</p>');
+		
+		console.log(index);
+		
+		$.ajax({
+		  url: '{{ url_api }}city_gml/area/'+index,
+		  type: 'GET',
+		  /*
+		  headers: {
+			"Authorization": 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1NzgwNDA0MDMsImlhdCI6MTU3Nzk1Mzk5OCwic3ViIjoyfQ.aOcc8AoywBLEslHjTpUO1RD5bPXFLmcIzpMLq5HpgCI'  
+		  },
+		  */
+		  //dataType: 'json',
+		  contentType: 'application/json',
+		  complete: function(response) {
+			data = response.responseJSON;
+			console.log(data);
+			if (data.data.length > 0){
+				var counting = 0;
+				$.each(data.data, function(i, v) {
+					console.log(i + " " + v.status.id);
+					$("#buildings_layer").html('<div id="layer2">Layer Building.. loading</p>');
+					if (v.status.id == 3){
+						kml_name = v.city_gml_file.replace(".gml", "_geometry.kml");
+						path = "data/export/kml/"+kml_name;
+						var geocachePromise = Cesium.KmlDataSource.load("{{ url_for('static', filename='1')}}".replace(1,path), kmlOptions);
+						geocachePromise.then(function(dataSource) {
+							viewer.dataSources.add(dataSource);
+							$("#layer2").html('<div class="w3-row"><div class="w3-col l2"><label class="switch"><input id="layerB" type="checkbox" checked><span class="slider round"></span></label></div><div class="w3-col l8"><span>Buildings</span></div><div class="w3-col l2"><button type="button" class="w3-button w3-small" id="zoom0" style="padding-top:0px"><i class="fa fa-search"></i></button></div></div>');
+							$('#layerB').on('click', function() {
+								if($(this).is(":checked")){
+									for (i=0; i< viewer.dataSources.length; i++){
+										viewer.dataSources._dataSources[i].show = true;
+									}
+								}else{
+									for (i=0; i< viewer.dataSources.length; i++){
+										viewer.dataSources._dataSources[i].show = false;
+									}
+								}
+							});
+							
+							$('#zoom0').on('click', function() {
+								viewer.flyTo(dataSource);
+							});
+							console.log(viewer.dataSources.length);
+							//console.log("load building " + i);
+						});
+						counting ++;
+					}
+				if(counting == 0){
+					$("#buildings_layer").html('<div id="layer2">No Building data found</p>');
+				}
+				});
+			}else{
+				$("#buildings_layer").html('<div id="layer2">No Building data found</p>');
+			}
+		  }
+		});
+		/*
 		list_kota = list[index];
 		for (i=0; i < list_kota.length; i++){
 			//console.log(list_kota[i]);
@@ -777,7 +745,7 @@
 				});
 				//console.log("load building " + i);
 			});
-		}
+		}*/
 		
 	}
 	
@@ -825,7 +793,7 @@
 		var tileset = viewer.scene.primitives.add(new Cesium.Cesium3DTileset({
 			url : "{{ url_for('static', filename='1') }}".replace(1,spatial_plan[index])
 		}));
-		
+		console.log(kota);
 		$("#lyr1").html('<div class="w3-row"><div class="w3-col l2"><label class="switch"><input id="layerC" type="checkbox" checked><span class="slider round"></span></label></div><div class="w3-col l8"><span>'+kota[index]+'</span></div><div class="w3-col l2"></div></div>');
 		$('#layerC').on('click', function() {
 			if($(this).is(":checked")){
